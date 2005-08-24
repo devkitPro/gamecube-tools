@@ -1,0 +1,110 @@
+ASSEMBLER SYNTAX
+----------------
+
+
+1. Labels and constants
+
+Label must start at first character of line and must end with colon ':'.
+Labels can contain letters (a-z, A-Z). digits (0-9) and underscore sign ('_'). Logic and arithmetic
+operators are not allowed in label, as well as spaces and reserved characters sucj as #?@%$.
+Label cannot start with digit.
+Constant differ from label only that equ redefines label to fixed value.
+
+Example:
+
+        ORG   0000
+start:  NOP             ; start is set to 0000
+lab2:                   ; lab2 is set to 1 (same as program counter)
+lab3:   EQU   (1 + 17)	; lab3 is set to 18
+
+2. Expressions
+
+Calculated expressions are allowed. 
+Allowed logic operators: & - AND, | - OR, & - XOR.
+Allowed arithmetic opeartors: +, -, /, *
+Nested brackets are allowed. 
+Use of defined labels and constants is allowed.
+
+Example:
+
+loop:
+        LRI    $r07, (loop + 12) * (3 | 0xfc)
+        
+3. Reserved keywords
+
+EQU		- Equals, is used for setting constant to given value. 
+		Value can be calculated from expression.
+		Expression can use other labels but they need to be edefined earlier in source
+
+EXAMPLE:
+
+label:	equ		<value>
+
+
+
+ORG		- Originate, is used to modify current program counter to given value
+		Value can be calculated from expression.
+		Expression can use other labels but they need to be edefined earlier in source
+		
+EXAMPLE:
+		org		<value>
+		
+
+
+INCLUDE	- Include other source file.
+
+EXAMPLE:
+		include	<string>
+		
+
+
+INCDIR	- Change include's directory
+
+EXAMPLE:
+		incldir	<string>
+		
+
+
+SEGMENT	- Select segment. Available segments are "CODE", "DATA" and "OVERLAY". Default segment ie. when
+user does not specify it, is assumed to be segment code. Address in segment is preserved upon segment change.
+
+EXAMPLE:
+		segment		"code"
+		
+
+
+4. Parameters
+
+$r      - register (r = 0-31)
+@$r     - memory location pointed by register ( r = 0-31)
+#mm     - 8 bit signed immediate 
+#mmmm   - 16bit signed immediate
+@xxxx   - memory location
+xxxx    - address (for jumps)
+
+Every parameter can be calculated as expresion or can be provided as label or expression of labels.
+Although prefixes ($, @$, #, @) must always be present at the level of opcode, eg:
+acc0:  equ    31
+VAL1:  equ    1
+VAL2:  equ    2
+       lri    $acc0, #(VAL1 + VAL2)
+
+illegal is definition (and further use of such) like:
+acc0:  equ    $31
+
+
+5. Instruction syntax
+
+label:	opcode'ex_opcode	opcode_params : ex_opcode_params
+
+label               - can be ommited
+opcode              - must be provided
+'ex_opcode          - extended opcode (second pipeline of DSP)
+opcode_params       - parameters for opcode if necessary
+ex_opcode_params    - parameters for extended opcode if necessary
+
+
+EXAMPLE:
+
+func:	decm'ln     $acs0 : $ac1.m, @$ar0
+
