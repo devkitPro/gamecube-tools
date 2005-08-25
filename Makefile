@@ -74,7 +74,7 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 #---------------------------------------------------------------------------------
 $(BUILD): lib
 	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 lib:
 	mkdir -p lib
 
@@ -85,6 +85,10 @@ clean:
 
 #---------------------------------------------------------------------------------
 all: clean $(BUILD)
+
+#---------------------------------------------------------------------------------
+install:
+	cp gdtool$(exeext) $(PREFIX)
 
 
 #---------------------------------------------------------------------------------
