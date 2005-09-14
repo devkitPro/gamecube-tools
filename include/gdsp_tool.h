@@ -23,7 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 ====================================================================*/
 
-#pragma once
+#ifndef _gdsp_tool_h_
+#define _gdsp_tool_h_
 
 typedef struct gd_globals_t
 {
@@ -52,3 +53,4 @@ void gd_dis_open_unkop(void);
 void gd_ass_file(gd_globals_t *gdg, char *fname, uint32 pass);
 void gd_ass_init(void);
 
+#endif

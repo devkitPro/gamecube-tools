@@ -99,7 +99,7 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-$(TOPDIR)/gdtool$(exeext)	:	gdtool.o $(TOPDIR)/lib/libgcdsp.a
+$(TOPDIR)/gcdsptool$(exeext)	:	gdtool.o $(TOPDIR)/lib/libgcdsp.a
 	$(LD) $(LDFLAGS) $(^) -o $@
 
 $(TOPDIR)/lib/libgcdsp.a	:	assemble.o disassemble.o opcodes.o

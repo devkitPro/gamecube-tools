@@ -1,6 +1,6 @@
 /*====================================================================
 
-$Id: gdtool.cpp,v 1.2 2005-09-14 02:06:24 wntrmute Exp $
+$Id: gdtool.cpp,v 1.3 2005-09-14 02:19:29 wntrmute Exp $
 
 project:      GameCube DSP Tool (gcdsp)
 mail:		  duddie@walla.com
@@ -22,6 +22,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 $Log: not supported by cvs2svn $
+Revision 1.2  2005/09/14 02:06:24  wntrmute
+added TCHAR defines on linux
+
 Revision 1.1  2005/08/24 22:13:34  wntrmute
 Initial import
 
@@ -29,24 +32,6 @@ Initial import
 ====================================================================*/
 
 #include <stdio.h>
-
-/*
- *  Pull in the typedef of TCHAR for windows.
- */
-#if defined(__CYGWIN__)
-    typedef char TCHAR;
-#elif defined(__WIN32__) && !defined(_TCHAR_DEFINED)
-#   include <tchar.h>
-#   ifndef _TCHAR_DEFINED
-        /* Borland seems to forget to set this. */
-        typedef _TCHAR TCHAR;
-#       define _TCHAR_DEFINED
-#   endif
-#   if defined(_MSC_VER) && defined(__STDC__)
-        /* MSVC++ misses this. */
-        typedef _TCHAR TCHAR;
-#   endif
-#endif
 
 #include <memory.h>
 #include <stdlib.h>
@@ -62,7 +47,7 @@ Initial import
 #define M_ASSEMBLE		1
 #define	M_DISASSEMBLE	2
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char* argv[])
 {
 	uint8 mode;
 	char *fname=NULL;

@@ -1,6 +1,6 @@
 /*====================================================================
 
-$Id: assemble.cpp,v 1.1 2005-08-24 22:13:34 wntrmute Exp $
+$Id: assemble.cpp,v 1.2 2005-09-14 02:19:29 wntrmute Exp $
 
 project:      GameCube DSP Tool (gcdsp)
 mail:		  duddie@walla.com
@@ -22,11 +22,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 $Log: not supported by cvs2svn $
+Revision 1.1  2005/08/24 22:13:34  wntrmute
+Initial import
+
 
 ====================================================================*/
 
 #include <stdio.h>
-#include <tchar.h>
 #include <memory.h>
 #include <stdlib.h>
 
