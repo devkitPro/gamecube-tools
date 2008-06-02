@@ -25,7 +25,7 @@ CFLAGS	:=	$(DEBUGFLAGS) -Wall -O3\
 
 CFLAGS	+=	$(INCLUDE)
 
-LDFLAGS	=	$(DEBUGFLAGS) -Wl,-Map,$(notdir $@).map
+LDFLAGS	=	$(DEBUGFLAGS)
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
