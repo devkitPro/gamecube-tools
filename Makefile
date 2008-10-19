@@ -8,6 +8,12 @@ ifneq (,$(findstring MINGW,$(test)))
 	export exeext	:= .exe
 endif
 
+ifneq (,$(findstring Darwin,$(shell uname -s)))
+	CFLAGS	+= -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+	ARCH	:= -arch i386 -arch ppc
+	LDFLAGS += -arch i386 -arch ppc
+endif
+
 #---------------------------------------------------------------------------------
 # BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
@@ -110,12 +116,14 @@ $(TOPDIR)/lib/libgcdsp.a	:	assemble.o disassemble.o opcodes.o
 #---------------------------------------------------------------------------------
 %.o : %.cpp
 	@echo $(notdir $<)
-	@$(CXX) -MMD $(CFLAGS) -o $@ -c $<
+	$(CXX) -E -MMD $(CFLAGS) $< > /dev/null
+	$(CXX) $(CFLAGS) $(ARCH) -o $@ -c $<
 
 #---------------------------------------------------------------------------------
 %.o : %.c
 	@echo $(notdir $<)
-	@$(CC) -MMD $(CFLAGS) -o $@ -c $<
+	$(CC) -E -MMD $(CFLAGS) $< > /dev/null
+	$(CC) $(CFLAGS) $(ARCH) -o $@ -c $<
 
 #---------------------------------------------------------------------------------
 %.o : %.s
