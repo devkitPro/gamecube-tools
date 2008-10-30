@@ -3,8 +3,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <string.h>
-
-//#define HOST_BIG_ENDIAN
+#include <sys/param.h>
 
 #define EI_NIDENT       16
 
@@ -56,7 +55,7 @@ typedef struct {
 
 int verbosity = 0;
 
-#ifdef HOST_BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 
 #define swap32(x) (x)
 #define swap16(x) (x)
@@ -324,9 +323,6 @@ void map_dol(DOL_map *map)
 		map->header.data_off[0] = swap32(DOL_ALIGN(sizeof(DOL_hdr)));
 	}
 }
-
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
 #define BLOCK (1024*1024)
 
