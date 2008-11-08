@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <Freeimage.h>
+#include <FreeImage.h>
 
 
 // TODO: reference additional headers your program requires here
