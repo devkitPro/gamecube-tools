@@ -1,6 +1,6 @@
 /*====================================================================
 
-$Id: disassemble.cpp,v 1.2 2008-06-02 02:42:57 wntrmute Exp $
+$Id: disassemble.cpp,v 1.3 2008-11-11 01:04:26 wntrmute Exp $
 
 project:      GameCube DSP Tool (gcdsp)
 mail:		  duddie@walla.com
@@ -22,6 +22,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 $Log: not supported by cvs2svn $
+Revision 1.4  2008/10/04 10:30:00  Hermes
+add register names, export to a textfile
+Revision 1.2  2008/06/02 02:42:57  wntrmute
+fix stuff on OSX
+
 Revision 1.1  2005/08/24 22:13:34  wntrmute
 Initial import
 
@@ -52,6 +57,7 @@ typedef struct pdlabel_t
 	char	*description;
 } pdlabels_t;
 
+
 pdlabel_t pdlabels[] =
 {
 	{ 0xffc9, "DSCR", "DSP DMA Control Reg", },
@@ -71,52 +77,66 @@ pdlabel_t pdlabels[] =
 	{ 0xfffd, "DMBL", "DSP Mailbox L", },
 	{ 0xfffe, "CMBH", "CPU Mailbox H", },
 	{ 0xffff, "CMBL", "CPU Mailbox L", },
+	{0,"","LABEL"}
 };
 
 pdlabel_t regnames[] =
 {
-	{ 0x00, "R00", "Register 00", },
-	{ 0x01, "R01", "Register 00", },
-	{ 0x02, "R02", "Register 00", },
-	{ 0x03, "R03", "Register 00", },
-	{ 0x04, "R04", "Register 00", },
-	{ 0x05, "R05", "Register 00", },
-	{ 0x06, "R06", "Register 00", },
-	{ 0x07, "R07", "Register 00", },
+	{ 0x00, "AR0", "Register 00", },
+	{ 0x01, "AR1", "Register 00", },
+	{ 0x02, "AR2", "Register 00", },
+	{ 0x03, "AR3", "Register 00", },
+	{ 0x04, "IX0", "Register 00", },
+	{ 0x05, "IX1", "Register 00", },
+	{ 0x06, "IX2", "Register 00", },
+	{ 0x07, "IX3", "Register 00", },
 	{ 0x08, "R08", "Register 00", },
 	{ 0x09, "R09", "Register 00", },
-	{ 0x0a, "R0a", "Register 00", },
-	{ 0x0b, "R0b", "Register 00", },
-	{ 0x0c, "R0c", "Register 00", },
-	{ 0x0d, "R0d", "Register 00", },
-	{ 0x0e, "R0e", "Register 00", },
-	{ 0x0f, "R0f", "Register 00", },
-	{ 0x00, "ACH0", "Accumulator High 0", },
+	{ 0x0a, "R0A", "Register 00", },
+	{ 0x0b, "R0B", "Register 00", },
+	{ 0x0c, "ST0", "Register 00", },
+	{ 0x0d, "ST1", "Register 00", },
+	{ 0x0e, "ST2", "Register 00", },
+	{ 0x0f, "ST3", "Register 00", },
+	{ 0x10, "ACH0", "Accumulator High 0", },
 	{ 0x11, "ACH1", "Accumulator High 1", },
-	{ 0x12, "R12", "Register 00", },
-	{ 0x13, "R13", "Register 00", },
-	{ 0x14, "R14", "Register 00", },
-	{ 0x15, "R15", "Register 00", },
-	{ 0x16, "R16", "Register 00", },
-	{ 0x17, "R17", "Register 00", },
-	{ 0x18, "R18", "Register 00", },
-	{ 0x19, "R19", "Register 00", },
-	{ 0x1a, "R1a", "Register 00", },
-	{ 0x1b, "R1b", "Register 00", },
-	{ 0x1c, "R1c", "Register 00", },
-	{ 0x1d, "R1d", "Register 00", },
-	{ 0x1e, "ACL0", "Register 00", },
-	{ 0x1f, "ACL1", "Register 00", },
+	{ 0x12, "CONFIG", "Register 00", },
+	{ 0x13, "SR", "Register 00", },
+	{ 0x14, "PRODL", "Register 00", },
+	{ 0x15, "PRODM", "Register 00", },
+	{ 0x16, "PRODH", "Register 00", },
+	{ 0x17, "PRODM2", "Register 00", },
+	{ 0x18, "AXL0", "Register 00", },
+	{ 0x19, "AXL1", "Register 00", },
+	{ 0x1a, "AXH0", "Register 00", },
+	{ 0x1b, "AXH1", "Register 00", },
+	{ 0x1c, "ACL0", "Register 00", },
+	{ 0x1d, "ACL1", "Register 00", },
+	{ 0x1e, "ACM0", "Register 00", },
+	{ 0x1f, "ACM1", "Register 00", },
 };
+
+char set_addr[65536];
 
 char tmpstr[12];
 char * pdname(uint16 val)
 {
+static char my_label[32];
+
 	uint32 i;
 	for(i = 0 ; i < sizeof(pdlabels)/sizeof(pdlabel_t) ; i++)
 	{
+
+		if (pdlabels[i].name[0]==0)
+			{
+			sprintf(my_label,"LABEL_0x%4.4x", val);
+			set_addr[val]|=1;
+			return my_label;
+			}
+		
 		if (pdlabels[i].addr == val)
 			return pdlabels[i].name;
+
 	}
 	sprintf(tmpstr, "0x%04x", val);
 	return tmpstr;
@@ -149,6 +169,7 @@ char *gd_dis_params(gd_globals_t *gdg, opc_t *opc, uint16 op1, uint16 op2, char 
 
 		uint32 type;
 		type = opc->params[j].type;
+		if((type & 0xff)==0x10) type &=0xff00;
 		if (type & P_REG)
 		{
 
@@ -170,11 +191,21 @@ char *gd_dis_params(gd_globals_t *gdg, opc_t *opc, uint16 op1, uint16 op2, char 
 			else sprintf(buf, "@$%d", val);
 			break;
 		case P_VAL:
-			sprintf(buf, "0x%04x", val);
+			if (gdg->decode_names)
+				sprintf(buf, "%s", pdname(val));
+			else
+				sprintf(buf, "0x%04x", val);
 			break;
 		case P_IMM:
 			if (opc->params[j].size != 2)
-				sprintf(buf, "#0x%02x", val);
+				{
+				if(opc->params[j].mask==0x007f) // LSL, LSR, ASL, ASR
+					{
+					sprintf(buf, "#%d", val<64 ? val: -(0x80-val));
+					}
+				else
+					sprintf(buf, "#0x%02x", val);
+				}
 			else
 				sprintf(buf, "#0x%04x", val);
 			break;
@@ -310,8 +341,13 @@ char *gd_dis_opcode(gd_globals_t *gdg)
 	}
 
 	// printing
-
+	
+	if(gdg->decode_names)
+		{if(set_addr[gdg->pc] & 1) sprintf(buf,"LABEL_0x%4.4x:\r\n", gdg->pc);buf += strlen(buf);}
+	
 	if (gdg->show_pc) sprintf(buf, "%04x ", gdg->pc);
+	else sprintf(buf, "	");
+
 	buf += strlen(buf);
 
 	if ((opc->size & ~P_EXT) == 2)
@@ -378,6 +414,8 @@ bool gd_dis_file(gd_globals_t *gdg, char *name, FILE *output)
 {
 	FILE *in;
 	uint32 size;
+	int pass,n;
+	uint16 start_pc= gdg->pc;
 
 	in = fopen(name, "rb");
 	if (in == NULL)
@@ -391,10 +429,62 @@ bool gd_dis_file(gd_globals_t *gdg, char *name, FILE *output)
 	gdg->buffer = (char *)malloc(256);
 	gdg->buffer_size = 256;
 
-	for (gdg->pc = 0 ; gdg->pc < (size/2) ;)
-	{
-		fprintf(output, "%s\n", gd_dis_opcode(gdg));
-	}
+	memset(set_addr, 0, 65536);
+	
+	for(pass=!gdg->decode_names; pass<2; pass++) // two pass to add labels
+		{
+		gdg->pc=start_pc;
+		if(pass==1 && gdg->decode_names)
+			{
+			int first=1;
+
+			fprintf(output, "\r\n/********************************/\r\n");
+			fprintf(output, "/**      REGISTER NAMES        **/\r\n");
+			fprintf(output, "/********************************/\r\n\r\n");
+
+			for(n=0;n<32;n++)
+				fprintf(output, "%s:	equ	0x%4.4x\r\n", regnames[n].name, regnames[n].addr);
+
+			fprintf(output, "\r\n/********************************/\r\n");
+			fprintf(output, "/**      REGISTER ADDRESS      **/\r\n");
+			fprintf(output, "/********************************/\r\n\r\n");
+
+			n=0;
+			while(pdlabels[n].name[0]!=0)
+				{
+				fprintf(output, "%s:	equ	0x%4.4x\r\n", pdlabels[n].name, pdlabels[n].addr);
+				n++;
+				}
+			for(n=0;n<65536;n++) // addresses out of the code
+				{
+				if(set_addr[n]==1)
+					{
+					if(first)
+						{
+						first=0;
+						fprintf(output, "\r\n/********************************/\r\n");
+						fprintf(output, "/**       OTHER ADDRESSES      **/\r\n");
+						fprintf(output, "/********************************/\r\n\r\n");
+						}
+					fprintf(output, "LABEL_0x%4.4x:	equ	0x%4.4x\r\n", n, n);
+					}
+				}
+			fprintf(output, "\r\n/********************************/\r\n");
+			fprintf(output, "/**         START CODE         **/\r\n");
+			fprintf(output, "/********************************/\r\n\r\n");
+			fprintf(output, "	org	0x%4.4x\r\n\r\n", gdg->pc);
+
+			fprintf(output,"START:\r\n");
+			}
+		// gdg->pc PC is now provided by one param
+		for (gdg->pc =start_pc ; gdg->pc < (start_pc+(size/2)) ;)
+			{
+			set_addr[gdg->pc]|=2;
+			if(pass==0) gd_dis_opcode(gdg);
+				else fprintf(output, "%s\r\n", gd_dis_opcode(gdg));
+			}
+		}
+
 	fclose(in);
 
 	free(gdg->binbuf);

@@ -1,6 +1,6 @@
 /*====================================================================
 
-$Id: assemble.cpp,v 1.2 2005-09-14 02:19:29 wntrmute Exp $
+$Id: assemble.cpp,v 1.3 2008-11-11 01:04:26 wntrmute Exp $
 
 project:      GameCube DSP Tool (gcdsp)
 mail:		  duddie@walla.com
@@ -21,7 +21,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+Revision 1.4  2008/10/04 10:30:00  Hermes
+added function to export the code to .h file
+added support for '/ *' '* /' and '//' for comentaries
+added some sintax detection when use registers
+
 $Log: not supported by cvs2svn $
+Revision 1.2  2005/09/14 02:19:29  wntrmute
+added header guards
+use standard main function
+
 Revision 1.1  2005/08/24 22:13:34  wntrmute
 Initial import
 
@@ -88,7 +97,11 @@ typedef enum err_t
 	ERR_UNKNOWN_LABEL,
 	ERR_NO_MATCHING_BRACKETS,
 	ERR_EXT_CANT_EXTEND_OPCODE,
-	ERR_EXT_PAR_NOT_EXT
+	ERR_EXT_PAR_NOT_EXT,
+	ERR_WRONG_PARAMETER_ACC,
+	ERR_WRONG_PARAMETER_MID_ACC,
+	ERR_INVALID_REGISTER,
+	ERR_OUT_RANGE_NUMBER
 };
 
 typedef enum segment_t
@@ -117,10 +130,14 @@ char *err_string[] =
 	"Incorrect hexadecimal value",
 	"Incorrect decimal value",
 	"Label already exists",
-	"Label not defined"
+	"Label not defined",
 	"No matching brackets",
 	"This opcode cannot be extended",
-	"Given extending params for non extensible opcode"
+	"Given extending params for non extensible opcode",
+	"Wrong parameter: must be accumulator register (r1c-r1d)",
+	"Wrong parameter: must be mid accumulator register",
+	"Invalid register",
+	"Number out of range"
 };
 
 
@@ -134,13 +151,26 @@ fass_t	*cur_fa;
 
 uint32 segment_addr[SEGMENT_MAX];
 
-
+int current_param=0;
 
 void parse_error(err_t err_code, fass_t *fa)
 {
+
 	if (fa->fsrc)
 		fclose(fa->fsrc);
-	fprintf(stderr, "ERROR: %s Line: %d\n", err_string[err_code], fa->code_line);
+	else
+		{
+		fprintf(stderr, "ERROR: %s\n", err_string[err_code]);
+		exit(-1);
+		}
+
+	// modified by Hermes
+
+	if(current_param==0)
+		fprintf(stderr, "ERROR: %s Line: %d\n", err_string[err_code], fa->code_line);
+	else 
+		fprintf(stderr, "ERROR: %s Line: %d Param: %d\n", err_string[err_code], fa->code_line, current_param);
+
 	exit(-1);
 }
 
@@ -302,7 +332,7 @@ uint32 parse_exp(char *ptr)
 		val = parse_exp(d_buffer);
 		sprintf(d_buffer, "%s%d%s", s_buffer, val, pbuf);
 		strcpy(s_buffer, d_buffer);
-	};
+	}
 	j = 0;
 	for(i = 0 ; i < ((sint32)strlen(s_buffer) + 1) ; i++)
 	{
@@ -346,8 +376,15 @@ uint32 parse_exp(char *ptr)
 	{
 		*pbuf = 0x0;
 		val = parse_exp(d_buffer) - parse_exp(pbuf+1);
+		if(val<0) 
+			{val=0x10000+(val & 0xffff); // ATTENTION: avoid a terrible bug!!! number cannot write with '-' in sprintf
+			if(cur_fa) fprintf(stderr, "WARNING: Number Underflow at Line: %d \n", cur_fa->code_line);
+			}
+		
 		sprintf(d_buffer, "%d", val);
+		
 	}
+
 
 	while((pbuf = strstr(d_buffer, "*")) != NULL)
 	{
@@ -477,18 +514,72 @@ opc_t *find_opcode(char *opcode, uint32 par_count, opc_t *opcod, uint32 opcod_si
 	return NULL;
 }
 
+uint16 get_mask(uint16 mask)
+{
+	while(!(mask & 1)) mask>>=1;
+return mask;
+}
+
 bool verify_params(opc_t *opc, param_t *par, uint32 count, fass_t *fa)
 {
 	uint32 i;
+	int value;
+	unsigned int valueu;
+
 
 	for(i = 0 ; i < count ; i++)
 	{
-		if (opc->params[i].type != par[i].type)
+	current_param=i+1;
+
+		if (opc->params[i].type != par[i].type || (par[i].type & P_REG))
 		{
+			
 			if ((opc->params[i].type & P_REG) && (par[i].type & P_REG))
-			{
+				{
+				// modified by Hermes: test the register range
+
+				switch((unsigned)opc->params[i].type)
+					{
+					case P_REG18:
+					case P_REG19:
+					case P_REG1A:
+					case P_REG1C:
+						value=(opc->params[i].type>>8) & 31;
+						if((int)par[i].val<value || (int)par[i].val>value+get_mask(opc->params[i].mask))
+							{
+							parse_error(ERR_INVALID_REGISTER, fa);
+							}
+					break;
+					case P_PRG:
+						if((int)par[i].val<0 || (int)par[i].val>0x3)
+							{
+							parse_error(ERR_INVALID_REGISTER, fa);
+							}
+					break;
+
+					case P_ACC:
+						if((int)par[i].val<0x1c || (int)par[i].val>0x1d)
+							{
+							if(par[i].val>=0x1e && par[i].val<=0x1f)
+								fprintf(stderr, "WARNING: $ACM%d register used instead $ACC%d register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else
+								parse_error(ERR_WRONG_PARAMETER_ACC, fa);
+							}
+					break;
+					case P_ACCMID:
+						if((int)par[i].val<0x1e || (int)par[i].val>0x1f)
+							{
+							parse_error(ERR_WRONG_PARAMETER_MID_ACC, fa);
+							}
+
+					break;
+					}
+				
+				
+				
 				continue;
-			}
+				}
 			switch(par[i].type & (P_REG | P_VAL | P_MEM | P_IMM))
 			{
 			case P_REG:
@@ -507,7 +598,85 @@ bool verify_params(opc_t *opc, param_t *par, uint32 count, fass_t *fa)
 			parse_error(ERR_WRONG_PARAMETER, fa);
 			break;
 		}
+	else
+	if ((opc->params[i].type & 3)!=0 && (par[i].type & 3)!=0)
+		{// modified by Hermes: test NUMBER range
+		value=get_mask(opc->params[i].mask);
+
+		valueu=0xffff & ~(value>>1);
+		if((int)par[i].val<0)
+			{
+			if(value==7) // value 7 por sbclr/sbset
+				{
+				fprintf(stderr,"Value must be from 0x0 to 0x%x\n", value);
+				parse_error(ERR_OUT_RANGE_NUMBER, fa);
+				}
+			else
+			if(opc->params[i].type==P_MEM)
+					{
+					if(value<256)
+						fprintf(stderr,"Address value must be from 0x%x to 0x%x\n",valueu, (value>>1));
+					else
+						fprintf(stderr,"Address value must be from 0x0 to 0x%x\n", value);
+
+					parse_error(ERR_OUT_RANGE_NUMBER, fa);
+					}
+			else
+			if((int)par[i].val<-((value>>1)+1))
+				{
+				if(value<128)
+					fprintf(stderr,"Value must be from -0x%x to 0x%x\n",((value>>1)+1), ((value>>1)));
+				else
+					fprintf(stderr,"Value must be from -0x%x to 0x%x or 0x0 to 0x%x\n",((value>>1)+1), ((value>>1)),value);
+
+				parse_error(ERR_OUT_RANGE_NUMBER, fa);
+				}
+			}
+		else
+			{
+			if(value==7) // value 7 por sbclr/sbset
+				{
+				if(par[i].val>(unsigned)value)
+					{
+					fprintf(stderr,"Value must be from 0x%x to 0x%x\n",valueu, value);
+					parse_error(ERR_OUT_RANGE_NUMBER, fa);
+					}
+				}
+			else
+			if(opc->params[i].type==P_MEM)
+				{
+				if(value<256) value>>=1; // addressing 8 bit with sign
+				if(par[i].val>(unsigned)value && (par[i].val<valueu || par[i].val>(unsigned)0xffff))
+					{
+					if(value<256)
+						fprintf(stderr,"Address value must be from 0x%x to 0x%x\n",valueu, value);
+					else
+						fprintf(stderr,"Address value must be minor of 0x%x\n", value+1);
+					parse_error(ERR_OUT_RANGE_NUMBER, fa);
+					}
+				}
+			else
+				{
+				if(value<128) value>>=1; // special case ASL/ASR/LSL/LSR
+
+				if(par[i].val>(unsigned)value)
+					{
+					if(value<64)
+						fprintf(stderr,"Value must be from -0x%x to 0x%x\n",(value+1), value);
+					else
+						fprintf(stderr,"Value must be minor of 0x%x\n", value+1);
+					parse_error(ERR_OUT_RANGE_NUMBER, fa);
+					}
+				}
+			}
+		
+		continue;
+		}
+			
 	}
+
+current_param=0;
+
 	return true;
 }
 
@@ -549,6 +718,7 @@ void gd_ass_file(gd_globals_t *gdg, char *fname, uint32 pass)
 	uint32 opcode_size;
 	int i;
 	fass_t fa;
+    int disable_text=0; // modified by Hermes
 
 	params = (param_t *)malloc(sizeof(param_t) * 10);
 	params_ext = (param_t *)malloc(sizeof(param_t) * 10);
@@ -576,6 +746,32 @@ void gd_ass_file(gd_globals_t *gdg, char *fname, uint32 pass)
 		{
 			char c;
 			c = linebuffer[i];
+
+			// modified by Hermes : added // and /* */ for long comentaries 
+			if(c=='/')
+				{
+				if(i<1023)
+					{
+					if(linebuffer[i+1]=='/') c=0x00;
+						else
+							if(linebuffer[i+1]=='*') 
+								{
+								if(disable_text) {disable_text=0;}
+								else disable_text=1;
+								}
+					}
+				}
+			else
+				if(c=='*')
+				{
+				if(i<1023)
+					if(linebuffer[i+1]=='/') 
+					   if(disable_text) {disable_text=0;c=32;linebuffer[i+1]=32;}
+				}
+			
+
+			if(disable_text && ((unsigned char )c)>32) c=32;
+
 			if (c == 0x0a || c == 0x0d || c == ';')
 				c = 0x00;
 			if (c == 0x09)				// tabs to spaces
@@ -583,6 +779,7 @@ void gd_ass_file(gd_globals_t *gdg, char *fname, uint32 pass)
 			if (c >= 'a' && c <= 'z')	// convert to uppercase
 				c = c - 'a' + 'A';
 			linebuffer[i] = c;
+			if(c==0) break; // modified by Hermes
 		}
 		char *ptr;
 		ptr = linebuffer;
@@ -666,18 +863,23 @@ void gd_ass_file(gd_globals_t *gdg, char *fname, uint32 pass)
 					lval = params[0].val;
 					opcode = NULL;
 				}
+			
+				
 			}
 			if (pass == 1)
 			{
 				labels[labels_count].label = (char *)malloc(strlen(label) + 1);
 				strcpy(labels[labels_count].label, label);
-				labels[labels_count].addr = lval;;
+				labels[labels_count].addr = lval;
 				labels_count++;
 			}
+		
+		
 		}
 
 		if (opcode == NULL)
 			continue;
+		
 
 		// check if opcode is reserved compiler word
 		if (strcmp("INCLUDE", opcode) == 0)

@@ -76,6 +76,7 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 $(BUILD): lib
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+
 lib:
 	mkdir -p lib
 
@@ -107,6 +108,7 @@ $(TOPDIR)/lib/libgcdsp.a	:	assemble.o disassemble.o opcodes.o
 
 #---------------------------------------------------------------------------------
 %.a:
+	rm -f $@
 	$(AR) rcs $@ $(^)
 
 #---------------------------------------------------------------------------------

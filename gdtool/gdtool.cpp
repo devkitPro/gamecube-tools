@@ -1,6 +1,6 @@
 /*====================================================================
 
-$Id: gdtool.cpp,v 1.3 2005-09-14 02:19:29 wntrmute Exp $
+$Id: gdtool.cpp,v 1.4 2008-11-11 01:04:26 wntrmute Exp $
 
 project:      GameCube DSP Tool (gcdsp)
 mail:		  duddie@walla.com
@@ -22,6 +22,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 $Log: not supported by cvs2svn $
+Revision 1.4  2008/10/04 10:30:00  Hermes
+added function to export the code to .h file
+added support for / * * / and // for comentaries
+added some sintax detection when use registers
+
+Revision 1.3  2005/09/14 02:19:29  wntrmute
+added header guards
+use standard main function
+
 Revision 1.2  2005/09/14 02:06:24  wntrmute
 added TCHAR defines on linux
 
@@ -47,18 +56,22 @@ Initial import
 #define M_ASSEMBLE		1
 #define	M_DISASSEMBLE	2
 
+extern sint32 strtoval(char *str);
+
 int main(int argc, char* argv[])
 {
 	uint8 mode;
 	char *fname=NULL;
 	char *ofile = "a.out";
-	int i;
+	int i,n;
 	bool	decode_unknown = false;
 	mode = M_NONE;
 
+	FILE *fout=stdout;
+
 	gd_globals_t *gdg;
 	gdg = gd_init();
-
+	gdg->pc = 0;
 	gdg->decode_registers = false;
 	gdg->decode_names = false;
 	gdg->show_hex = true;
@@ -71,7 +84,25 @@ int main(int argc, char* argv[])
 		{
 			switch(argv[i][1])
 			{
+			case 'a': // added by Hermes
+				if(argv[i + 1])
+				{
+				char cadena[1024];
+				sprintf(cadena,"#%s",argv[i + 1]);
+				n=0;
+				while(cadena[n]!=0)
+					{
+					if (cadena[n] >= 'a' && cadena[n] <= 'z')	// convert to uppercase
+					cadena[n] = cadena[n] - 'a' + 'A';
+					n++;
+					}
+				gdg->pc = strtoval(cadena);
+				}
+	
+				i++;
+				break;
 			case 'd':
+				ofile=NULL; // modified by Hermes
 				mode = M_DISASSEMBLE;
 				fname = argv[i + 1];
 				i++;
@@ -106,7 +137,10 @@ int main(int argc, char* argv[])
 	switch(mode)
 	{
 	case M_DISASSEMBLE:
-		gd_dis_file(gdg, fname, stdout);
+		 
+		if(ofile)
+			if(!(fout=fopen(ofile, "wb"))) fout=stdout;
+		gd_dis_file(gdg, fname, fout);
 		break;
 	case M_ASSEMBLE:
 		gd_ass_init();
@@ -116,13 +150,64 @@ int main(int argc, char* argv[])
 
 		printf("Code size: %d\n", gdg->buffer_size * 2);
 
-		FILE *fout;
+		
+		
+		char name[32];
+		int n;
+		char *cad,*cad2;
+
 		fout = fopen(ofile, "wb");
+		cad2=strstr(ofile,".h");
+		if(cad2)
+			{
+			char *end[2]={"", ","};
+			cad=cad2;
+			while(cad>ofile)
+				{
+				if(*cad=='/' || *cad=='\\') {cad++;break;}
+				cad--;
+				}
+			n=(int) (cad2-cad);
+			if(n>31) n=31;
+			memcpy(name,cad,n);name[n]=0;
+		
+			fprintf(fout, "/* gdtool v1.4 .h exporter by Hermes */\r\n\r\n");
+
+			fprintf(fout, "#define size_%s %d\r\n\r\n",name, (gdg->buffer_size*2+31) & ~31); // padded to 32 bytes
+		
+			fprintf(fout, "unsigned short %s[size_%s/2] __attribute__ ((aligned (32))) ={\r\n\r\n",name, name);
+			cad=gdg->buffer;
+			n=0;
+			while(n<gdg->buffer_size)
+				{
+				if(n & 15) fprintf(fout, " 0x%x%s", ((unsigned char) cad[1]) | (((unsigned char) cad[0])<<8), end[(n<gdg->buffer_size-1)]);
+				else	fprintf(fout, "\r\n	0x%x%s", ((unsigned char) cad[1]) | (((unsigned char) cad[0])<<8), end[(n<gdg->buffer_size-1)]);
+				cad+=2;
+				n++;
+				}
+			fprintf(fout, "\r\n\r\n};\r\n\r\n");
+			}
+        else
 		fwrite(gdg->buffer, 1, gdg->buffer_size * 2, fout);
 		fclose(fout);
 		break;
 	default:
-		printf("GCDSP 0.1, Copyright (C) 2005 Duddie\nGCDSP comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome\nto redistribute it under GPL conditions\n");
+		printf("GCDSP 1.4, Copyright (C) 2005 Duddie\nGCDSP comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome\nto redistribute it under GPL conditions\n");
+		printf("\nUsage:\n\n");
+		printf("	gcdsptool <param1> <param2> ....\n\n");
+		printf("		-a 0x01AB  -> start address to disassemble\n");
+		printf("		-s         -> don't show PC and HEX code\n");
+		printf("		-n         -> decode names\n");
+		printf("		-r         -> decode registers\n");
+		printf("		-u         -> decode unknown\n");
+		printf("		-d infile  -> disassemble file\n");
+		printf("		-c infile  -> assemble file\n");
+		printf("		-o outfile -> output file (ext .h to C export file)\n\n");
+		printf("Examples:\n\n");
+		printf("  gcdsptool -c dsp.asm -o dsp.h	-> assemble and export to C\n");
+		printf("  gcdsptool -c dsp.asm -o dsp.bin	-> assemble and export to Binary\n");
+		printf("  gcdsptool -a 0x8000 -n -r -s -d rom_dump.bin -o rom_dump.asm\n");
+		printf("  gcdsptool -n -r -d code_dump.bin -o code_dump.lst\n\n");
 		break;
 	}
 

@@ -1,6 +1,6 @@
 /*====================================================================
 
-$Id: opcodes.h,v 1.2 2005-09-14 02:19:29 wntrmute Exp $
+$Id: opcodes.h,v 1.3 2008-11-11 01:04:26 wntrmute Exp $
 
 project:      GameCube DSP Tool (gcdsp)
 mail:		  duddie@walla.com
@@ -22,6 +22,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 $Log: not supported by cvs2svn $
+Revision 1.2  2005/09/14 02:19:29  wntrmute
+added header guards
+use standard main function
+
 Revision 1.1  2005/08/24 22:13:34  wntrmute
 Initial import
 
@@ -45,10 +49,13 @@ typedef enum partype_t
 	P_REG10		= P_REG | 0x1000,
 	P_REG18		= P_REG | 0x1800,
 	P_REG19		= P_REG | 0x1900,
+	P_REGM18	= P_REG | 0x1810, // used in multiply instructions
+	P_REGM19	= P_REG | 0x1910, // used in multiply instructions
 	P_REG1A		= P_REG | 0x1a00,
 	P_REG1C		= P_REG | 0x1c00,
-	P_ACC		= P_REG | 0x1e00,
-	P_ACCD		= P_REG | 0x1e80,
+	P_ACC		= P_REG | 0x1c10, // used for global accum
+	P_ACCD		= P_REG | 0x1c80,
+	P_ACCMID	= P_REG | 0x1e00, // used for mid accum
 	P_REGS_MASK = 0x01f80,
 	P_REF		= P_REG | 0x4000,
 	P_PRG		= P_REF | P_REG,
