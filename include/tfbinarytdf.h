@@ -13,9 +13,11 @@ public:
 
 private:
 	int WriteTextureDescBlock();
-	int WritePalBlock();
-	int WriteImageBlock();
-	int WritePalDataBank(_tImage *tImage);
+	int WritePalDescBlock();
+	int WriteImageDescBlock();
+	int WriteImageDataBlock();
+	int WritePalDataBlock();
+
 
 	int WriteTexture_I4(_tImage *tImage);
 	int WriteTexture_I8(_tImage *tImage);

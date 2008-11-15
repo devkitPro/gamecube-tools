@@ -10,7 +10,7 @@ const unsigned int CTextureFile::tplTexDescSize = 8;
 const unsigned int CTextureFile::tplHdrSize = 12;
 const unsigned int CTextureFile::tplPalDescSize = 12;
 const unsigned int CTextureFile::tplImgDescSize = 36;
-const unsigned int CTextureFile::tplVersion = 01102005;
+const unsigned int CTextureFile::tplVersion = 0x0020AF30;
 
 using namespace squish;
 
@@ -80,6 +80,16 @@ void CTextureFile::GetMinMag(CConverter::_tImage *tImage,int& nMin,int& nMag)
 	}
 }
 
+int CTextureFile::Seek(int offset,int origin,FILE *pFile)
+{
+	FILE *outFile;
+
+	if(!m_pOutputFile && !pFile) return -1;
+
+	outFile = (pFile!=NULL?pFile:m_pOutputFile);
+	return fseek(outFile,offset,origin);
+}
+
 int CTextureFile::WriteValue(void *pValue,int nType,int nLen,FILE *pFile)
 {
 	int nRet = 0;
@@ -97,7 +107,7 @@ int CTextureFile::WriteValue(void *pValue,int nType,int nLen,FILE *pFile)
 		case VALUE_TYPE_SHORT:
 		{
 			short nValue = *(short*)pValue;
-#ifndef BIGENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 			nValue = SwapShort(nValue);
 #endif
 			nRet = fwrite(&nValue,1,sizeof(short),outFile);
@@ -106,10 +116,19 @@ int CTextureFile::WriteValue(void *pValue,int nType,int nLen,FILE *pFile)
 		case VALUE_TYPE_INT:
 		{
 			int nValue = *(int*)pValue;
-#ifndef BIGENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 			nValue = SwapInt(nValue);
 #endif
 			nRet = fwrite(&nValue,1,sizeof(int),outFile);
+		}
+		break;
+		case VALUE_TYPE_FLOAT:
+		{
+			float nValue = *(float*)pValue;
+#if BYTE_ORDER == LITTLE_ENDIAN
+			nValue = SwapFloat(nValue);
+#endif
+			nRet = (int)fwrite(&nValue,1,sizeof(float),outFile);
 		}
 		break;
 		case VALUE_TYPE_STRING:
@@ -366,28 +385,36 @@ int CTextureFile::ComputeFilterModeByDimension(CConverter::_tImage *tImage)
 
 void CTextureFile::ComputeTPLSize()
 {
+	int nSize;
 	int nTexs,nPal;
 
+	nPal = GetNumPalettes();
 	nTexs = GetNumTextures();
 	m_nTexDescBlockSize = nTexs*tplTexDescSize;
 	m_nImgDescBlockSize = nTexs*tplImgDescSize;	
-
-	nPal = GetNumPalettes();
 	m_nPalDescBlockSize = nPal*tplPalDescSize;	
 
-	SetTPLPaletteValues();
-	SetTPLImageValues();
+	nSize = tplHdrSize+m_nTexDescBlockSize+m_nImgDescBlockSize;
+	if(nSize<32) m_nImageDescPad = 32-nSize;
+	else if(nSize%32) m_nImageDescPad = 32-(nSize%32);
+
+	nSize = tplHdrSize+m_nTexDescBlockSize+m_nImgDescBlockSize+m_nImageDescPad+m_nPalDescBlockSize;
+	if(nSize<32) m_nPalDescPad = 32-nSize;
+	else if(nSize%32) m_nPalDescPad = 32-(nSize%32);
+
 	SetTPLTextureValues();
+	SetTPLImageValues();
+	SetTPLPaletteValues();
 }
 
 void CTextureFile::SetTPLTextureValues()
 {
-	int nImgDescOffset,nPalDescOffset;
 	int nPos;
+	int nImgDescOffset,nPalDescOffset;
 	_tImage *tImages;
 
-	nPalDescOffset = tplHdrSize+m_nTexDescBlockSize;
-	nImgDescOffset = tplHdrSize+m_nTexDescBlockSize+m_nPalDescBlockSize+m_nPalDescPad+m_nPalBankSize;
+	nImgDescOffset = tplHdrSize+m_nTexDescBlockSize;
+	nPalDescOffset = tplHdrSize+m_nTexDescBlockSize+m_nImgDescBlockSize+m_nImageDescPad;
 
 	nPos = 0;
 	tImages = m_tImages;
@@ -402,16 +429,11 @@ void CTextureFile::SetTPLTextureValues()
 
 void CTextureFile::SetTPLImageValues()
 {
+	int nPos;
 	int nBankOffset;
-	int nSize,nPos;
 	_tImage *tImages;
 
-	m_nImgDescBlockSize = 0;
-	nSize = tplHdrSize+m_nTexDescBlockSize+m_nPalDescBlockSize+m_nPalDescPad+m_nPalBankSize+m_nImgDescBlockSize;
-	if(nSize<32) m_nImageDescPad = 32-nSize;
-	else if(nSize%32) m_nImageDescPad = 32-(nSize%32);
-
-	nBankOffset = tplHdrSize+m_nTexDescBlockSize+m_nPalDescBlockSize+m_nPalDescPad+m_nPalBankSize+m_nImgDescBlockSize+m_nImageDescPad;
+	nBankOffset = tplHdrSize+m_nTexDescBlockSize+m_nImgDescBlockSize+m_nImageDescPad+m_nPalDescBlockSize+m_nPalDescPad;
 
 	nPos = 0;
 	m_nImgBankSize = 0;
@@ -430,20 +452,13 @@ void CTextureFile::SetTPLImageValues()
 
 void CTextureFile::SetTPLPaletteValues()
 {
+	int nPos,nEntrySize;
 	int nBankOffset,nCols;
-	int nSize,nPos,nEntrySize;
 	CImage *pImg;
 	RGBQUAD *pPal;
 	_tImage *tImages;
 
-	m_nPalDescPad = 0;
-	if(m_nPalDescBlockSize!=0) {
-		nSize = tplHdrSize+m_nTexDescBlockSize+m_nPalDescBlockSize;
-		if(nSize<32) m_nPalDescPad = 32-nSize;
-		else if(nSize%32) m_nPalDescPad = 32-(nSize%32);
-	}
-
-	nBankOffset = tplHdrSize+m_nTexDescBlockSize+m_nPalDescBlockSize+m_nPalDescPad;
+	nBankOffset = tplHdrSize+m_nTexDescBlockSize+m_nImgDescBlockSize+m_nImageDescPad+m_nPalDescBlockSize+m_nPalDescPad+m_nImgBankSize;
 
 	nPos = 0;
 	m_nPalBankSize = 0;

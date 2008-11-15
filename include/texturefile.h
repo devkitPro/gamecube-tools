@@ -7,8 +7,9 @@
 #define VALUE_TYPE_CHAR		0
 #define VALUE_TYPE_SHORT	1
 #define VALUE_TYPE_INT		2
-#define VALUE_TYPE_STRING	3
-#define VALUE_TYPE_DATA		4
+#define VALUE_TYPE_FLOAT	3
+#define VALUE_TYPE_STRING	4
+#define VALUE_TYPE_DATA		5
 
 #define CMPR_TYPE_TCX		0
 #define CMPR_TYPE_SQUISH	1
@@ -30,6 +31,7 @@ public:
 protected:
 	int GetNumTextures();
 	int GetNumPalettes();
+	int Seek(int offset,int origin,FILE *pFile = NULL);
 	int WriteValue(void *pValue,int nType,int nLen = -1,FILE *pFile = NULL);
 	int WriteFormatString(FILE *pFile,const char *pszFormat,...);
 	

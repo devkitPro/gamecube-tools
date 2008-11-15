@@ -33,8 +33,10 @@ int CTFBinaryTDF::Write(CParser *pParser)
 		WriteValue(&nHdrSize,VALUE_TYPE_INT);
 
 		WriteTextureDescBlock();
-		WritePalBlock();
-		WriteImageBlock();
+		WriteImageDescBlock();
+		WritePalDescBlock();
+		WriteImageDataBlock();
+		WritePalDataBlock();
 	}
 	return nRet;
 }
@@ -472,7 +474,7 @@ int CTFBinaryTDF::WriteTextureDescBlock()
 	return nRet;
 }
 
-int CTFBinaryTDF::WritePalBlock()
+int CTFBinaryTDF::WritePalDescBlock()
 {
 	int nRet,iTmp;
 	short sTmp;
@@ -483,6 +485,8 @@ int CTFBinaryTDF::WritePalBlock()
 	nRet = 0;
 	tImages = m_tImages;
 	while(tImages) {
+		Seek(tImages->nPalDescOffset,SEEK_SET);
+
 		if(tImages->nPalCols>0) {
 			sTmp = (short)tImages->nPalCols;
 			nRet += WriteValue(&sTmp,VALUE_TYPE_SHORT);
@@ -494,22 +498,46 @@ int CTFBinaryTDF::WritePalBlock()
 
 			iTmp = tImages->nPalDataOffset;
 			nRet += WriteValue(&iTmp,VALUE_TYPE_INT);
-			
+
 		}
 		tImages = tImages->pNext;
 	}
-
 	if(m_nPalDescPad>0) nRet += WriteValue(tplPad,VALUE_TYPE_DATA,m_nPalDescPad);
-	
+
+	return nRet;
+}
+
+int CTFBinaryTDF::WritePalDataBlock()
+{
+	int nRet;
+	int nEntries;
+	RGBQUAD *pPal;
+	_tImage *tImages;
+
+	nRet = 0;
 	tImages = m_tImages;
 	while(tImages) {
-		nRet += WritePalDataBank(tImages);
+		Seek(tImages->nPalDataOffset,SEEK_SET);
+
+		if(tImages->pPal && tImages->nPalCols>0) {
+			pPal = tImages->pPal;
+			nEntries = tImages->nPalCols;
+			switch(tImages->nPalFmt) {
+				case TF_TLUT_RGB565:
+					nRet += WritePalBlock_RGB565(nEntries,pPal);
+					break;
+				case TF_TLUT_RGB5A3:
+					nRet += WritePalBlock_RGB5A3(nEntries,pPal);
+					break;
+			}
+		}
+
 		tImages = tImages->pNext;
 	}
 	return nRet;
 }
 
-int CTFBinaryTDF::WriteImageBlock()
+int CTFBinaryTDF::WriteImageDescBlock()
 {
 	char cTmp;
 	int nMin,nMag;
@@ -522,6 +550,8 @@ int CTFBinaryTDF::WriteImageBlock()
 	nRet = 0;
 	tImages = m_tImages;
 	while(tImages) {
+		Seek(tImages->nImageDescOffset,SEEK_SET);
+
 		sTmp = (unsigned short)(tImages->pImage->GetXSize()>>tImages->nMinLOD);
 		nRet += WriteValue(&sTmp,VALUE_TYPE_SHORT);
 
@@ -547,26 +577,38 @@ int CTFBinaryTDF::WriteImageBlock()
 		nRet += WriteValue(&nMag,VALUE_TYPE_INT);
 
 		iTmp = 0;
-		nRet += WriteValue(&iTmp,VALUE_TYPE_INT);
+		nRet += WriteValue(&iTmp,VALUE_TYPE_FLOAT);
 
 		cTmp = 0;
 		nRet += WriteValue(&cTmp,VALUE_TYPE_CHAR);
-		
+
 		cTmp = (unsigned char)tImages->nRemapLOD;
 		nRet += WriteValue(&cTmp,VALUE_TYPE_CHAR);
-		
+
 		cTmp = (unsigned char)(tImages->nRemapLOD+(tImages->nMaxLOD-tImages->nMinLOD));
 		nRet += WriteValue(&cTmp,VALUE_TYPE_CHAR);
 
 		nRet += WriteValue(tplPad,VALUE_TYPE_CHAR);
-		
+
 		tImages = tImages->pNext;
 	}
-
 	if(m_nImageDescPad>0) nRet += WriteValue(tplPad,VALUE_TYPE_DATA,m_nImageDescPad);
 
+	return nRet;
+}
+
+int CTFBinaryTDF::WriteImageDataBlock()
+{
+	int nRet;
+	_tImage *tImages;
+
+	if(!m_tImages) return 0;
+
+	nRet = 0;
 	tImages = m_tImages;
 	while(tImages) {
+		Seek(tImages->nImageDataOffset,SEEK_SET);
+
 		switch(tImages->nColFmt) {
 			case TF_I4:
 				nRet += WriteTexture_I4(tImages);
@@ -592,7 +634,7 @@ int CTFBinaryTDF::WriteImageBlock()
 			case TF_RGB5A3:
 				nRet += WriteTexture_RGB5A3(tImages);
 				break;
-			
+
 			case TF_RGBA8:
 				nRet += WriteTexture_RGBA8(tImages);
 				break;
@@ -603,29 +645,6 @@ int CTFBinaryTDF::WriteImageBlock()
 		}
 		tImages = tImages->pNext;
 	}
-
-	return nRet;
-}
-
-int CTFBinaryTDF::WritePalDataBank(_tImage *tImage)
-{
-	int nEntries,nRet = 0;
-	RGBQUAD *pPal;
-
-	if(!tImage) return 0;
-	if(!tImage->pPal || tImage->nPalCols<=0) return 0;
-
-	nEntries = tImage->nPalCols;
-	pPal = tImage->pPal;
-	switch(tImage->nPalFmt) {
-		case TF_TLUT_RGB565:
-			nRet += WritePalBlock_RGB565(nEntries,pPal);
-			break;
-		case TF_TLUT_RGB5A3:
-			nRet += WritePalBlock_RGB5A3(nEntries,pPal);
-			break;
-	}
-
 	return nRet;
 }
 

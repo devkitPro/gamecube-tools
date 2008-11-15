@@ -28,7 +28,6 @@ public:
 
 	void ReleaseAll();
 
-	int GetOutputFileType() {return m_nOutType;}
 	const char* GetOutputFilename() {return m_sOutFilename.c_str();}
 	const _ttokenstringlist* GetEntries() {return m_pArgList;}
 
@@ -39,7 +38,6 @@ protected:
 	int NewTokenString(const char *pszTokenString,int nLen);
 
 protected:
-	int m_nOutType;
 	string m_sOutFilename;
 	string m_sInFilename;
 

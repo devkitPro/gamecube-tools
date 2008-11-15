@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "image.h"
-#include "tfbinary.h"
 #include "tfbinarytdf.h"
 #include "converter.h"
 
@@ -489,14 +488,7 @@ int CConverter::WriteTextures()
 
 	nRet = EXIT_FAILURE;
 	if(m_pImages) {
-		switch(m_pParser->GetOutputFileType()) {
-			case TF_FILE_BINARY_ONE:
-				pFile = new CTFBinary(m_pImages);
-				break;
-			case TF_FILE_BINARY_TDF:
-				pFile = new CTFBinaryTDF(m_pImages);
-				break;
-		}
+		pFile = new CTFBinaryTDF(m_pImages);
 		if(pFile) {
 			nRet = pFile->Write(m_pParser);
 			delete pFile;

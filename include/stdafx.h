@@ -21,11 +21,21 @@
 
 #include <FreeImage.h>
 
+/*+----------------------------------------------------------------------------------------------+*/
+#ifndef LITTLE_ENDIAN
+#define LITTLE_ENDIAN  3412
+#endif /* LITTLE_ENDIAN */
+/*+----------------------------------------------------------------------------------------------+*/
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN     1234
+#endif /* BIGE_ENDIAN */
+/*+----------------------------------------------------------------------------------------------+*/
+#ifndef BYTE_ORDER
+#define BYTE_ORDER     LITTLE_ENDIAN
+#endif /* BYTE_ORDER */
+/*+----------------------------------------------------------------------------------------------+*/
 
 // TODO: reference additional headers your program requires here
-
-#define TF_FILE_BINARY_ONE						0
-#define TF_FILE_BINARY_TDF						1
 
 #define _SHIFTL(v,s,w)							((unsigned int)(((unsigned int)(v)&((0x01<<(w))-1))<<(s)))
 #define _SHIFTR(v,s,w)							((unsigned int)(((unsigned int)(v)>>(s))&((0x01<<(w))-1)))
@@ -37,6 +47,20 @@
 
 #define SwapInt(n)								(LOBYTE(LOWORD(n))<<24) + (HIBYTE(LOWORD(n))<<16) + (LOBYTE(HIWORD(n))<<8) + HIBYTE(HIWORD(n))
 #define SwapShort(n)							(LOBYTE(n)<<8) + HIBYTE(n)
+
+static inline float SwapFloat(float n)
+{
+	union ieee32
+	{
+		float f;
+		int i;
+	};
+	ieee32 v;
+	char* const p = (char*)&n;
+
+	v.i = ((p[0]>>24)|(p[1]>>8)|(p[2]<<8)|(p[3]<<24));
+	return v.f;
+}
 
 #ifdef LINUX
 #define stricmp									strcasecmp

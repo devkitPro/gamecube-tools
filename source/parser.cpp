@@ -30,7 +30,6 @@ CParser::CParser()
 	m_pArgList = NULL;
 	m_sInFilename = "";
 	m_sOutFilename = "";
-	m_nOutType =  TF_FILE_BINARY_ONE;
 }
 
 CParser::~CParser()
@@ -45,8 +44,6 @@ void CParser::ReleaseAll()
 	m_pArgList = NULL;
 	m_sInFilename = "";
 	m_sOutFilename = "";
-	m_nOutType =  TF_FILE_BINARY_ONE;
-
 }
 
 void CParser::Empty()
@@ -99,9 +96,6 @@ int CParser::Parse(int argc,const char **argv)
 				case 'o':
 					m_sOutFilename = (argc>arg)?argv[++arg]:"";
 					break;
-				case 't':
-					m_nOutType = (argc>arg)?strtoul(argv[++arg],0,0):0;
-					break;
 			}
 		}
 	}
@@ -109,11 +103,7 @@ int CParser::Parse(int argc,const char **argv)
 	if(m_sInFilename.empty()) return EXIT_FAILURE;
 
 	id = m_sInFilename.substr(0,m_sInFilename.find('.'));
-	if(m_sOutFilename.empty()) {
-		m_sOutFilename = m_sInFilename.substr(0,m_sInFilename.find('.'));
-		if(m_nOutType==TF_FILE_BINARY_ONE) m_sOutFilename = id + ".bin";
-		else m_sOutFilename = id + ".tdf";
-	}
+	if(m_sOutFilename.empty()) m_sOutFilename = id + ".tpl";
 
 	if(useScript==true)
 		LoadScriptfile(m_sInFilename.c_str());

@@ -51,29 +51,45 @@ CImage::~CImage()
 int CImage::Load(const char *pszFilename)
 {
 	unsigned bpp;
+	FIBITMAP *img = NULL;
 	FREE_IMAGE_FORMAT fif;
+	int nWidth,nHeight;
 
 	fif = FreeImage_GetFileType(pszFilename,0);
 	if(fif==FIF_UNKNOWN) fif = FreeImage_GetFIFFromFilename(pszFilename);
 
 	if(fif!=FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif))
-		m_pImage = FreeImage_Load(fif, pszFilename, 0);
-	else 
-		return 0;
+		img = FreeImage_Load(fif, pszFilename, 0);
 
-	if(m_pImage) {
-		bpp = FreeImage_GetBPP(m_pImage);
+	if(img) {
+		bpp = FreeImage_GetBPP(img);
 		if(bpp!=32) {
-			FIBITMAP *tmp = FreeImage_ConvertTo32Bits(m_pImage);
-			if(tmp==NULL) return 0;
+			FIBITMAP *tmp = FreeImage_ConvertTo32Bits(img);
 
-			FreeImage_Unload(m_pImage); 
-			m_pImage = tmp;
+			FreeImage_Unload(img); 
+			if(tmp==NULL) return 0;
+			
+			img = tmp;
 		}
 
-		m_nXSize = FreeImage_GetWidth(m_pImage);
-		m_nYSize = FreeImage_GetHeight(m_pImage);
-		FreeImage_FlipVertical(m_pImage);
+		nWidth = m_nXSize = FreeImage_GetWidth(img);
+		nHeight = m_nYSize = FreeImage_GetHeight(img);
+
+		if(m_nXSize&3) nWidth = ((m_nXSize+3)&~3);
+		if(m_nYSize&3) nHeight = ((m_nYSize+3)&~3);
+
+		if(m_nXSize!=nWidth || m_nYSize!=nHeight) {
+			FIBITMAP *tmp = FreeImage_Rescale(img,nWidth,nHeight,FILTER_BILINEAR);
+
+			FreeImage_Unload(img);
+			if(tmp==NULL) return 0;
+
+			img = tmp;
+		}
+
+		m_pImage = img;
+		m_nXSize = nWidth;
+		m_nYSize = nHeight;
 
 		return 1;
 	}
