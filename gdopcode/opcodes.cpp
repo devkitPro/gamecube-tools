@@ -1,6 +1,6 @@
 /*====================================================================
 
-$Id: opcodes.cpp,v 1.2 2008-11-11 01:04:26 wntrmute Exp $
+$Id: opcodes.cpp,v 1.3 2008-11-18 14:43:34 shagkur Exp $
 
 project:      GameCube DSP Tool (gcdsp)
 mail:		  duddie@walla.com
@@ -22,6 +22,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 $Log: not supported by cvs2svn $
+Revision 1.2  2008/11/11 01:04:26  wntrmute
+add Hermes' patches
+
 Revision 1.4  2008/10/04 10:30:00  Hermes
 Revision 1.1  2005/08/24 22:13:34  wntrmute
 Initial import
@@ -121,16 +124,16 @@ opc_t opcodes[] =
 	{ "IAR",	0x0008, 0xfffc, 1, 1, {{P_REG, 1, 0, 0, 0x0003}}, },
 
 	{ "CALLR",	0x171f, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },
-	{ "CALLRNS",	0x1700, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
-	{ "CALLRS",	0x1701, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
-	{ "CALLRG",	0x1702, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
-	{ "CALLRLE",0x1703, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
-	{ "CALLRNZ",0x1704, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
-	{ "CALLRZ",	0x1705, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
-	{ "CALLRL",0x1706, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
-	{ "CALLRGE",0x1707, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
-	{ "CALLRLNZ",0x170c, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
-	{ "CALLRLZ",0x170d, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
+	{ "CALLRNS",0x1710, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
+	{ "CALLRS",	0x1711, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
+	{ "CALLRG",	0x1712, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
+	{ "CALLRLE",0x1713, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
+	{ "CALLRNZ",0x1714, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
+	{ "CALLRZ",	0x1715, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
+	{ "CALLRL", 0x1716, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
+	{ "CALLRGE",0x1717, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
+	{ "CALLRLNZ",0x171c, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
+	{ "CALLRLZ",0x171d, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
 
 	{ "JMPR",	0x170f, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },
 	{ "JRNS",	0x1700, 0xff1f, 1, 1, {{P_REG, 1, 0, 5, 0x00e0}}, },  // new by Hermes
