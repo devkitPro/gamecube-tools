@@ -98,15 +98,16 @@ int CImage::Load(const char *pszFilename)
 
 CImage* CImage::BoxFilter(int nDestWidth,int nDestHeight)
 {
-	FIBITMAP *fib = NULL;
 	CImage *pImage = NULL;
 
-	//fib = FreeImage_Rescale(m_pImage,nDestWidth,nDestHeight,FILTER_BOX);
-	fib = FreeImage_Rescale(m_pImage,nDestWidth,nDestHeight,FILTER_BILINEAR);
-	if(fib!=NULL) {
-		pImage = new CImage(fib);
-		FreeImage_Unload(fib);
-	}
+	if(nDestWidth!=m_nXSize || nDestHeight!=m_nYSize) {
+		FIBITMAP *fib = FreeImage_Rescale(m_pImage,nDestWidth,nDestHeight,FILTER_BILINEAR);
+		if(fib!=NULL) {
+			pImage = new CImage(fib);
+			FreeImage_Unload(fib);
+		}
+	} else
+		pImage = new CImage(m_pImage);
 
 	return pImage;
 }
