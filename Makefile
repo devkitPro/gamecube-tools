@@ -91,6 +91,9 @@ clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(OUTPUT)
 
+install:
+	cp  $(OUTPUT) $(PREFIX)
+		
 #---------------------------------------------------------------------------------
 else
 
