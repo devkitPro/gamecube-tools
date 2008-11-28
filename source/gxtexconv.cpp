@@ -39,8 +39,8 @@ int main(int argc, const char** argv)
 
 	cParser.Parse(argc,argv);
 	cConv = CConverter(&cParser);
-	cConv.GenerateTextures();
-	cConv.WriteTextures();
+	if (cConv.GenerateTextures() != EXIT_SUCCESS) return EXIT_FAILURE;
+	if (cConv.WriteTextures() != EXIT_SUCCESS) return EXIT_FAILURE;
 
 	return 0;
 }

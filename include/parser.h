@@ -29,7 +29,10 @@ public:
 	void ReleaseAll();
 
 	const char* GetOutputFilename() {return m_sOutFilename.c_str();}
+	const char* GetInputFilename() {return m_sInFilename.c_str();}
 	const _ttokenstringlist* GetEntries() {return m_pArgList;}
+	string GetScriptPath() { return m_sScriptPath; }
+	string GetDepsFilename() { return m_sDepFilename; }
 
 protected:
 	void Empty();
@@ -40,6 +43,8 @@ protected:
 protected:
 	string m_sOutFilename;
 	string m_sInFilename;
+	string m_sScriptPath;
+	string m_sDepFilename;
 
 	_ttokenstringlist *m_pArgList;
 };

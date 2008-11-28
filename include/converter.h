@@ -3,6 +3,8 @@
 
 #include "parser.h"
 
+#include <vector>
+
 #define TF_I4									0
 #define TF_I8									1
 #define TF_IA4									2
@@ -135,6 +137,7 @@ private:
 	_tsImage **m_ppSrcImages;
 	_tImage *m_pImages;
 	CParser *m_pParser;
+	std::vector<std::string> m_Deps;
 };
 
 #endif

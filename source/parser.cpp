@@ -96,9 +96,13 @@ int CParser::Parse(int argc,const char **argv)
 				case 'o':
 					m_sOutFilename = (argc>arg)?argv[++arg]:"";
 					break;
+				case 'd':
+					m_sDepFilename = (argc>arg)?argv[++arg]:"";
+					break;
 			}
 		}
 	}
+	
 	
 	if(m_sInFilename.empty()) return EXIT_FAILURE;
 
@@ -172,6 +176,10 @@ int CParser::LoadScriptfile(const char *pszFilename)
 				pBuffer[nLen] = 0;
 		}
 		fclose(pScf);
+		m_sScriptPath = pszFilename;
+		m_sScriptPath.erase(m_sScriptPath.find_last_of("/\\"));
+		m_sScriptPath += "/";		
+		
 	} else
 		nRet = EXIT_FAILURE;
 

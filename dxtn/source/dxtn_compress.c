@@ -831,7 +831,7 @@ void tx_compress_dxtn(GLint srccomps, GLint width, GLint height, const GLubyte *
       }
       break;
    default:
-      fprintf(stderr, "libdxtn: Bad dstFormat %d in tx_compress_dxtn\n", destFormat);
+      fprintf(stderr, "libdxtn: Bad dstFormat %d in tx_compress_dxtn\n", (int)destFormat);
       return;
    }
 }
