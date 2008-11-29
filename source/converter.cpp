@@ -274,7 +274,7 @@ int CConverter::GenerateTexture(CParser::_ttokenstringlist *pEntry)
 
 	pImg = GetImage(pEntry->GetTokenValue("filepath"),nRet);
 	if(!pImg || !nRet) {
-		fprintf(stderr,"error loading image.\n");
+		fprintf(stderr,"error loading %s.\n",pEntry->GetTokenValue("filepath"));
 		return EXIT_FAILURE;
 	}
 
@@ -329,7 +329,7 @@ int CConverter::GenerateTextures()
 	while(pList) {
 		pImg = GetImage(pList->GetTokenValue("filepath"),nRet);
 		if(!pImg || !nRet) {
-			fprintf(stderr,"error loading image.\n");
+			fprintf(stderr,"error loading %s.\n",pList->GetTokenValue("filepath"));
 			return EXIT_FAILURE;
 		}
 

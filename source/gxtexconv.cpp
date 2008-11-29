@@ -8,11 +8,11 @@
 
 static void usage()
 {
-	fprintf(stderr, "gxtexconv v0.1.4\n");
+	fprintf(stderr, "gxtexconv v0.1.6\n");
 	fprintf(stderr, "coded by shagkur, #wiidev blitzed\n");
 	fprintf(stderr, "powered by FreeImage library\n\n");
 	fprintf(stderr, "usage: gxtexconv -i <imagepath> [-o <outputfile>.tpl colfmt=<texfmt> mipmap=yes minlod=<min level> maxlod=<max level> width=<newwidth> height=<newheight> [palfmt=<palcolfmt>]]\n");
-	fprintf(stderr, "       gxtexconv -s <scriptfile>.scf [-o <outputfile>.tpl]\n\n");
+	fprintf(stderr, "       gxtexconv -s <scriptfile>.scf [-d <dependency file>][-o <outputfile>.tpl]\n\n");
 	fprintf(stderr, "       supported texture formats:\n");
 	fprintf(stderr, "       0:  I4 (Intensity 4bit)\n");
 	fprintf(stderr, "       1:  I8 (Intensity 8bit)\n");

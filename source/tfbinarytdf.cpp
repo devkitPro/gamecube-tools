@@ -37,6 +37,23 @@ int CTFBinaryTDF::Write(CParser *pParser)
 		WritePalDescBlock();
 		WriteImageDataBlock();
 		WritePalDataBlock();
+		
+		string headerFilename=pParser->GetOutputFilename();
+		headerFilename.erase(headerFilename.find_last_of("."));
+		headerFilename += ".h";
+		
+		FILE *headerFile = fopen(headerFilename.c_str(),"wb");
+		int index=0;
+
+		if(headerFile) {
+			_tImage *tImages = m_tImages;
+			while(tImages) {
+				fprintf(headerFile,"#define %s %d\n",tImages->pszID,index);
+				tImages=tImages->pNext;
+				index++;
+			}
+			fclose(headerFile);
+		}
 	}
 	return nRet;
 }
