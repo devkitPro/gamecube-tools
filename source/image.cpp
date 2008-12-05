@@ -71,6 +71,8 @@ int CImage::Load(const char *pszFilename)
 			
 			img = tmp;
 		}
+		
+		FreeImage_FlipVertical(img);
 
 		nWidth = m_nXSize = FreeImage_GetWidth(img);
 		nHeight = m_nYSize = FreeImage_GetHeight(img);
