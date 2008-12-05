@@ -26,6 +26,7 @@
 #include "stdafx.h" 
 #include "alpha.h"
 #include <algorithm>
+#include <limits.h>
 
 namespace squish {
 
