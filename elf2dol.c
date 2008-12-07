@@ -5,6 +5,16 @@
 #include <string.h>
 #include <sys/param.h>
 
+#ifndef MAX
+//! Get the maximum of two values
+#define MAX(a, b)	(((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef MIN
+//! Get the minimum of two values
+#define MIN(a, b)	(((a) < (b)) ? (a) : (b))
+#endif
+
 #define EI_NIDENT       16
 
 typedef struct {
