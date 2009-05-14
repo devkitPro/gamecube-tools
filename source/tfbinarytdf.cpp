@@ -569,10 +569,10 @@ int CTFBinaryTDF::WriteImageDescBlock()
 	while(tImages) {
 		Seek(tImages->nImageDescOffset,SEEK_SET);
 
-		sTmp = (unsigned short)(tImages->pImage->GetXSize()>>tImages->nMinLOD);
+		sTmp = (unsigned short)(tImages->pImage->GetYSize()>>tImages->nMinLOD);
 		nRet += WriteValue(&sTmp,VALUE_TYPE_SHORT);
 
-		sTmp = (unsigned short)(tImages->pImage->GetYSize()>>tImages->nMinLOD);
+		sTmp = (unsigned short)(tImages->pImage->GetXSize()>>tImages->nMinLOD);
 		nRet += WriteValue(&sTmp,VALUE_TYPE_SHORT);
 
 		iTmp = tImages->nColFmt;
