@@ -366,7 +366,7 @@ int CTFBinaryTDF::WriteTexture_RGB5A3(_tImage *tImage)
 				for(x=0;x<xres;x+=4) {
 					for(iy=0;iy<4;++iy) {
 						for(ix=0;ix<4;++ix) {
-							color = (unsigned short)(_SHIFTL(((~bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_ALPHA]>>5)),12,3))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_RED]>>4),8,4))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_GREEN]>>4),4,4))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_BLUE]>>4),0,4))&~0x8000;
+							color = (unsigned short)(_SHIFTL(((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_ALPHA]>>5)),12,3))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_RED]>>4),8,4))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_GREEN]>>4),4,4))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_BLUE]>>4),0,4))&~0x8000;
 							WriteValue(&color,VALUE_TYPE_SHORT);
 						}
 					}
