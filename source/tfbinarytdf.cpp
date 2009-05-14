@@ -312,7 +312,6 @@ int CTFBinaryTDF::WriteTexture_RGB565(_tImage *tImage)
 		xres = pImg->GetXSize();
 		yres = pImg->GetYSize();
 
-		pImg->DiffuseError(0,5,6,5);
 		bits = pImg->GetPixel();
 		for(y=0;y<yres;y+=4) {
 			for(x=0;x<xres;x+=4) {
@@ -336,6 +335,7 @@ int CTFBinaryTDF::WriteTexture_RGB5A3(_tImage *tImage)
 	_tLayer *tLayers;
 	CImage *pImg;
 	BYTE *bits;
+	unsigned char a;
 	unsigned short color;
 
 	if(!tImage) return 0;
@@ -346,29 +346,17 @@ int CTFBinaryTDF::WriteTexture_RGB5A3(_tImage *tImage)
 		xres = pImg->GetXSize();
 		yres = pImg->GetYSize();
 
-		if(!pImg->IsTransparent()) {
-			pImg->DiffuseError(0,5,5,5);
-			bits = pImg->GetPixel();
-			for(y=0;y<yres;y+=4) {
-				for(x=0;x<xres;x+=4) {
-					for(iy=0;iy<4;++iy) {
-						for(ix=0;ix<4;++ix) {
-							color = (unsigned short)(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_RED]>>3),10,5))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_GREEN]>>3),5,5))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_BLUE]>>3),0,5))|0x8000;
-							WriteValue(&color,VALUE_TYPE_SHORT);
-						}
-					}
-				}
-			}
-		} else {
-			pImg->DiffuseError(3,4,4,4);
-			bits = pImg->GetPixel();
-			for(y=0;y<yres;y+=4) {
-				for(x=0;x<xres;x+=4) {
-					for(iy=0;iy<4;++iy) {
-						for(ix=0;ix<4;++ix) {
-							color = (unsigned short)(_SHIFTL(((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_ALPHA]>>5)),12,3))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_RED]>>4),8,4))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_GREEN]>>4),4,4))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_BLUE]>>4),0,4))&~0x8000;
-							WriteValue(&color,VALUE_TYPE_SHORT);
-						}
+		bits = pImg->GetPixel();
+		for(y=0;y<yres;y+=4) {
+			for(x=0;x<xres;x+=4) {
+				for(iy=0;iy<4;iy++) {
+					for(ix=0;ix<4;ix++) {
+						a = bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_ALPHA];
+						if(a>=224)
+							color = (unsigned short)((_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_RED]>>3),10,5))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_GREEN]>>3),5,5))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_BLUE]>>3),0,5)))|0x8000;
+						else
+							color = (unsigned short)((_SHIFTL((a>>5),12,3))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_RED]>>4),8,4))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_GREEN]>>4),4,4))|(_SHIFTL((bits[(((y+iy)*(xres<<2))+((x+ix)<<2))+FI_RGBA_BLUE]>>4),0,4)))&~0x8000;
+						WriteValue(&color,VALUE_TYPE_SHORT);
 					}
 				}
 			}
@@ -698,9 +686,9 @@ int CTFBinaryTDF::WritePalBlock_RGB5A3(int nEntries,RGBQUAD *pPal)
 
 	for(i=0;i<nEntries;i++) {
 		if(pPal[i].rgbReserved==0xff) {
-			color = (unsigned short)(_SHIFTL((pPal[i].rgbRed>>3),10,5))|(_SHIFTL((pPal[i].rgbGreen>>3),5,5))|(_SHIFTL((pPal[i].rgbBlue>>3),0,5))|0x8000;		
+			color = (unsigned short)((_SHIFTL((pPal[i].rgbRed>>3),10,5))|(_SHIFTL((pPal[i].rgbGreen>>3),5,5))|(_SHIFTL((pPal[i].rgbBlue>>3),0,5)))|0x8000;		
 		} else {
-			color = (unsigned short)(_SHIFTL((pPal[i].rgbReserved>>5),12,3))|(_SHIFTL((pPal[i].rgbRed>>4),8,4))|(_SHIFTL((pPal[i].rgbGreen>>4),4,4))|(_SHIFTL((pPal[i].rgbBlue>>4),0,4))&~0x8000;
+			color = (unsigned short)((_SHIFTL((pPal[i].rgbReserved>>5),12,3))|(_SHIFTL((pPal[i].rgbRed>>4),8,4))|(_SHIFTL((pPal[i].rgbGreen>>4),4,4))|(_SHIFTL((pPal[i].rgbBlue>>4),0,4)))&~0x8000;
 		}
 		nRet += WriteValue(&color,VALUE_TYPE_SHORT);
 	}
