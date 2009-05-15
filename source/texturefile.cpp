@@ -403,36 +403,17 @@ void CTextureFile::ComputeTPLSize()
 	else if(nSize%32) m_nPalDescPad = 32-(nSize%32);
 
 	SetTPLTextureValues();
-	SetTPLImageValues();
 	SetTPLPaletteValues();
 }
 
 void CTextureFile::SetTPLTextureValues()
 {
 	int nPos;
-	int nImgDescOffset,nPalDescOffset;
+	int nBankOffset;
+	int nImgDescOffset;
 	_tImage *tImages;
 
 	nImgDescOffset = tplHdrSize+m_nTexDescBlockSize;
-	nPalDescOffset = tplHdrSize+m_nTexDescBlockSize+m_nImgDescBlockSize+m_nImageDescPad;
-
-	nPos = 0;
-	tImages = m_tImages;
-	while(tImages) {
-		tImages->nImageDescOffset = nImgDescOffset+(nPos*tplImgDescSize);
-		if(tImages->pPal && tImages->nPalCols>0) tImages->nPalDescOffset = nPalDescOffset+(nPos*tplPalDescSize);
-
-		tImages = tImages->pNext;
-		nPos++;
-	}
-}
-
-void CTextureFile::SetTPLImageValues()
-{
-	int nPos;
-	int nBankOffset;
-	_tImage *tImages;
-
 	nBankOffset = tplHdrSize+m_nTexDescBlockSize+m_nImgDescBlockSize+m_nImageDescPad+m_nPalDescBlockSize+m_nPalDescPad;
 
 	nPos = 0;
@@ -441,6 +422,7 @@ void CTextureFile::SetTPLImageValues()
 	while(tImages) {
 		tImages->nImageDataOffset = nBankOffset;
 		tImages->nImageDataLen = ComputeTPLMipMapImageBufferSize(tImages);
+		tImages->nImageDescOffset = nImgDescOffset+(nPos*tplImgDescSize);
 
 		nBankOffset += tImages->nImageDataLen;
 		m_nImgBankSize += tImages->nImageDataLen;
@@ -452,12 +434,14 @@ void CTextureFile::SetTPLImageValues()
 
 void CTextureFile::SetTPLPaletteValues()
 {
+	int nPalDescOffset;
 	int nPos,nEntrySize;
 	int nBankOffset,nCols;
 	CImage *pImg;
 	RGBQUAD *pPal;
 	_tImage *tImages;
 
+	nPalDescOffset = tplHdrSize+m_nTexDescBlockSize+m_nImgDescBlockSize+m_nImageDescPad;
 	nBankOffset = tplHdrSize+m_nTexDescBlockSize+m_nImgDescBlockSize+m_nImageDescPad+m_nPalDescBlockSize+m_nPalDescPad+m_nImgBankSize;
 
 	nPos = 0;
@@ -469,6 +453,7 @@ void CTextureFile::SetTPLPaletteValues()
 			case TF_CI8:		
 			{
 				tImages->nPalDataOffset = nBankOffset;
+				tImages->nPalDescOffset = nPalDescOffset+(nPos*tplPalDescSize);
 				switch(tImages->nPalFmt) {
 					case TF_TLUT_RGB565:
 					case TF_TLUT_RGB5A3:
