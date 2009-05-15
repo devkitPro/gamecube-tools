@@ -37,7 +37,6 @@ protected:
 	
 	void ComputeTPLSize();
 	void SetTPLTextureValues();
-	void SetTPLImageValues();
 	void SetTPLPaletteValues();
 
 	int ComputeFilterModeByDimension(_tImage *tImage);
