@@ -434,6 +434,7 @@ void CTextureFile::SetTPLTextureValues()
 
 void CTextureFile::SetTPLPaletteValues()
 {
+	int nColFmt;
 	int nPalDescOffset;
 	int nPos,nEntrySize;
 	int nBankOffset,nCols;
@@ -448,7 +449,8 @@ void CTextureFile::SetTPLPaletteValues()
 	m_nPalBankSize = 0;
 	tImages = m_tImages;
 	while(tImages) {
-		switch(tImages->nColFmt) {
+		nColFmt = tImages->nColFmt;
+		switch(nColFmt) {
 			case TF_CI4:
 			case TF_CI8:		
 			{
@@ -468,7 +470,10 @@ void CTextureFile::SetTPLPaletteValues()
 				pPal = NULL;
 				if(tImages->pImage) {
 					pImg = tImages->pImage;
-					nCols = pImg->GetPalettized(NULL,&pPal,256);
+					if(nColFmt==TF_CI4)
+						nCols = pImg->GetPalettized(NULL,&pPal,16);
+					else 
+						nCols = pImg->GetPalettized(NULL,&pPal,256);
 
 					if(pPal && nCols>0 && nCols<=16384) {
 						tImages->nPalCols = nCols;

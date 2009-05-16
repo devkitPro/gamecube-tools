@@ -319,20 +319,28 @@ int CImage::GetPalettized(unsigned char **ppRcvIndices,RGBQUAD **ppRcvColors,int
 	int nNumCols = 0;
 	BYTE *bits;
 	RGBQUAD *pPal;
-	FIBITMAP *fib;
+	FIBITMAP *tmp = NULL;
+	FIBITMAP *fib = NULL;
 
 	if(m_pImage==NULL) return 0;
 
 	// we only support 4/8 bit color indexed images
-	if(nReqColors==16)
-		fib = FreeImage_ConvertTo4Bits(m_pImage);
-	else if(nReqColors==256)
-		fib = FreeImage_ConvertTo8Bits(m_pImage);
-	else 
-		return 0;
+	// convert down to 24 bits and quantize to desired color count
+	tmp = FreeImage_ConvertTo24Bits(m_pImage);
+	if(tmp) {
+		if(nReqColors==16)
+			fib = FreeImage_ColorQuantizeEx(tmp,FIQ_NNQUANT,16);
+		else if(nReqColors==256)
+			fib = FreeImage_ColorQuantizeEx(tmp,FIQ_NNQUANT,256);
+		else {
+			FreeImage_Unload(tmp);
+			return 0;
+		}
+		FreeImage_Unload(tmp);
+	}
 
 	if(fib) {
-		nSize = FreeImage_GetPitch(fib)*FreeImage_GetWidth(fib);
+		nSize = FreeImage_GetPitch(fib)*FreeImage_GetHeight(fib);
 		bits = FreeImage_GetBits(fib);
 		pPal = FreeImage_GetPalette(fib);
 		nNumCols = FreeImage_GetColorsUsed(fib);
