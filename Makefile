@@ -22,6 +22,17 @@ LDFLAGS		= $(MACHDEP)
 
 UNAME	:=	$(shell uname -s)
 
+ifneq (,$(findstring MINGW,$(UNAME)))
+	PLATFORM	:= win32
+	EXEEXT		:= .exe
+endif
+
+ifneq (,$(findstring CYGWIN,$(UNAME)))
+	CFLAGS	+= -mno-cygwin
+	LDFLAGS	+= -mno-cygwin
+	EXEEXT	:= .exe
+endif
+
 ifneq (,$(findstring Darwin,$(UNAME)))
 	CFLAGS	+= -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -fvisibility=hidden
 	ARCH	:= -arch i386 -arch ppc
@@ -89,7 +100,7 @@ clean:
 	@make -C dxtn clean
 	@make -C squish clean
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT)
+	@rm -fr $(BUILD) $(OUTPUT)$(EXEEXT)
 
 install:
 	cp  $(OUTPUT) $(PREFIX)
