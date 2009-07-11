@@ -37,7 +37,7 @@ class ColourFit
 {
 public:
 	ColourFit( ColourSet const* colours, int flags );
-
+	virtual ~ColourFit() {}
 	void Compress( void* block );
 
 protected:
