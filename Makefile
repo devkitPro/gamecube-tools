@@ -5,7 +5,6 @@
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
 TARGET		:=	gxtexconv
-#TARGET		:=	gxtexconv_d
 BUILD		:=	build
 SOURCES		:=	source
 INCLUDE		:=	include
@@ -16,9 +15,9 @@ LIBDIRS		:=	dxtn squish
 #---------------------------------------------------------------------------------
 
 MACHDEP 	= 
-CFLAGS 		= -O2 -Wall $(MACHDEP) $(INCLUDES)
+CFLAGS 		= -O -Wall $(INCLUDES)
 
-LDFLAGS		= $(MACHDEP)
+LDFLAGS		=
 
 UNAME	:=	$(shell uname -s)
 
@@ -34,9 +33,11 @@ ifneq (,$(findstring CYGWIN,$(UNAME)))
 endif
 
 ifneq (,$(findstring Darwin,$(UNAME)))
-	CFLAGS	+= -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -fvisibility=hidden
+	SDK	:=	/Developer/SDKs/MacOSX10.4u.sdk
+	CFLAGS	+= -mmacosx-version-min=10.4 -isysroot $(SDK) -fvisibility=hidden
+	export MACOSX_DEPLOYMENT_TARGET	:=	10.4
 	ARCH	:= -arch i386 -arch ppc
-	LDFLAGS += -arch i386 -arch ppc
+	LDFLAGS += -arch i386 -arch ppc -Wl,-syslibroot,$(SDK)
 endif
 
 PREFIX		:=	

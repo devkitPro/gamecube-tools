@@ -14,12 +14,14 @@ INCLUDE		:=	include
 #---------------------------------------------------------------------------------
 
 MACHDEP 	= 
-CFLAGS 		= -O2 -Wall -D_LIBDXTN_INTERNAL $(MACHDEP) $(INCLUDES)
+CFLAGS 		= -O -Wall -D_LIBDXTN_INTERNAL $(MACHDEP) $(INCLUDES)
 
 UNAME	:=	$(shell uname -s)
 
 ifneq (,$(findstring Darwin,$(UNAME)))
-	CFLAGS	+= -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+	SDK	:=	/Developer/SDKs/MacOSX10.4u.sdk
+	CFLAGS	+= -mmacosx-version-min=10.4 -isysroot $(SDK) -fvisibility=hidden
+	export MACOSX_DEPLOYMENT_TARGET	:=	10.4
 	ARCH	:= -arch i386 -arch ppc
 endif
 
