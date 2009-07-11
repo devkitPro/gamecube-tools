@@ -427,7 +427,7 @@ static void encodedxt5alpha(GLubyte *blkaddr, GLubyte srccolors[4][4][4],
                             GLint numxpixels, GLint numypixels)
 {
    GLubyte alphabase[2], alphause[2];
-   GLshort alphatest[2];
+   GLshort alphatest[2] = {0,0xff};
    GLuint alphablockerror1, alphablockerror2, alphablockerror3;
    GLubyte i, j, aindex, acutValues[7];
    GLubyte alphaenc1[16], alphaenc2[16], alphaenc3[16];
