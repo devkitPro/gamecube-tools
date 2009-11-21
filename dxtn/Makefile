@@ -13,9 +13,41 @@ INCLUDE		:=	include
 # options for code generation
 #---------------------------------------------------------------------------------
 
-MACHDEP 	= 
-CFLAGS 		= -O -Wall -D_LIBDXTN_INTERNAL $(MACHDEP) $(INCLUDES)
+UNAME	:=	$(shell uname -s)
 
+CFLAGS 		:= -O2 -Wall -D_LIBDXTN_INTERNAL $(INCLUDES)
+CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
+
+LDFLAGS	=	$(DEBUGFLAGS)
+
+ifneq (,$(findstring MINGW,$(UNAME)))
+	PLATFORM	:= win32
+	EXEEXT		:= .exe
+	CFLAGS		+= -mno-cygwin
+	LDFLAGS		+= -mno-cygwin -s
+	OS	:=	win32
+endif
+
+ifneq (,$(findstring CYGWIN,$(UNAME)))
+	CFLAGS		+= -mno-cygwin
+	LDFLAGS		+= -mno-cygwin -s
+	EXEEXT		:= .exe
+	OS	:=	win32
+endif
+
+ifneq (,$(findstring Darwin,$(UNAME)))
+	SDK	:=	/Developer/SDKs/MacOSX10.4u.sdk
+	OSXCFLAGS	:= -O -mmacosx-version-min=10.4 -isysroot $(SDK) -arch i386 -arch ppc
+	OSXCXXFLAGS	:=	$(OSXCFLAGS)
+	CXXFLAGS	+=	-fvisibility=hidden
+	export MACOSX_DEPLOYMENT_TARGET	:=	10.4
+	LDFLAGS += -arch i386 -arch ppc -Wl,-syslibroot,$(SDK)
+endif
+
+ifneq (,$(findstring Linux,$(UNAME)))
+	LDFLAGS += -s -static
+	OS := Linux
+endif
 UNAME	:=	$(shell uname -s)
 
 ifneq (,$(findstring Darwin,$(UNAME)))
@@ -25,9 +57,6 @@ ifneq (,$(findstring Darwin,$(UNAME)))
 	ARCH	:= -arch i386 -arch ppc
 endif
 
-PREFIX		:=	
-
-LIBS		:= 
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -103,14 +132,14 @@ $(OUTPUT).a: $(DFILES) $(OFILES)
 #---------------------------------------------------------------------------------
 %.o : %.cpp
 	@echo $(notdir $<)
-	$(CXX) -E -MMD $(CFLAGS) $< > /dev/null
-	$(CXX) $(CFLAGS) $(ARCH) -o $@ -c $<
+	$(CXX) -E -MMD $(CXXFLAGS) $< > /dev/null
+	$(CXX) $(OSXCXXFLAGS) $(CXXFLAGS) -o $@ -c $<
 
 #---------------------------------------------------------------------------------
 %.o : %.c
 	@echo $(notdir $<)
 	$(CC) -E -MMD $(CFLAGS) $< > /dev/null
-	$(CC) $(CFLAGS) $(ARCH) -o $@ -c $<
+	$(CC) $(OSXCFLAGS) $(CFLAGS) -o $@ -c $<
 
 #---------------------------------------------------------------------------------
 %.a:
