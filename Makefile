@@ -2,16 +2,26 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 
-test := $(shell uname -s)
+host_os := $(shell uname -s)
 
-ifneq (,$(findstring MINGW,$(test)))
+DEBUGFLAGS	:=
+
+CFLAGS	:=	$(DEBUGFLAGS) -Wall -O3
+CFLAGS	+=	$(INCLUDE)
+
+CXXFLAGS	:=	$(CFLAGS)
+LDFLAGS	:=	$(DEBUGFLAGS)
+
+ifneq (,$(findstring MINGW,$(host_os)))
 	export exeext	:= .exe
 endif
 
-ifneq (,$(findstring Darwin,$(shell uname -s)))
-	CFLAGS	+= -isysroot /Developer/SDKs/MacOSX10.4u.sdk
-	ARCH	:= -arch i386 -arch ppc
-	LDFLAGS += -arch i386 -arch ppc
+ifneq (,$(findstring Darwin,$(host_os)))
+	SDK	:=	/Developer/SDKs/MacOSX10.4u.sdk
+	OSXCFLAGS	:= -mmacosx-version-min=10.4 -isysroot $(SDK) -arch i386 -arch ppc
+	OSXCXXFLAGS	:=	$(OSXCFLAGS)
+	CXXFLAGS	+=	-fvisibility=hidden
+	LDFLAGS		+= -mmacosx-version-min=10.4 -arch i386 -arch ppc -Wl,-syslibroot,$(SDK)
 endif
 
 #---------------------------------------------------------------------------------
@@ -23,15 +33,6 @@ BUILD		:=	build
 SOURCES		:=	gdopcode gdtool
 INCLUDES	:=	include
 
-#---------------------------------------------------------------------------------
-# options for code generation
-#---------------------------------------------------------------------------------
-DEBUGFLAGS	:=	-g
-CFLAGS	:=	$(DEBUGFLAGS) -Wall -O3\
-
-CFLAGS	+=	$(INCLUDE)
-
-LDFLAGS	=	$(DEBUGFLAGS)
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -119,18 +120,13 @@ $(TOPDIR)/lib/libgcdsp.a	:	assemble.o disassemble.o opcodes.o
 %.o : %.cpp
 	@echo $(notdir $<)
 	$(CXX) -E -MMD $(CFLAGS) $< > /dev/null
-	$(CXX) $(CFLAGS) $(ARCH) -o $@ -c $<
+	$(CXX) $(OSXCXXFLAGS) $(CXXFLAGS) -o $@ -c $<
 
 #---------------------------------------------------------------------------------
 %.o : %.c
 	@echo $(notdir $<)
 	$(CC) -E -MMD $(CFLAGS) $< > /dev/null
-	$(CC) $(CFLAGS) $(ARCH) -o $@ -c $<
-
-#---------------------------------------------------------------------------------
-%.o : %.s
-	@echo $(notdir $<)
-	@$(CC) -MMD $(ASFLAGS) -o $@ -c $<
+	$(CC) $(OSXCFLAGS) $(CFLAGS) -o $@ -c $<
 
 
 #---------------------------------------------------------------------------------
