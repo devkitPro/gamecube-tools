@@ -29,6 +29,7 @@ ifneq (,$(findstring MINGW,$(UNAME)))
 	CFLAGS		+= -mno-cygwin
 	LDFLAGS		+= -mno-cygwin -s
 	OS	:=	win32
+	EXTRAINSTALL	:=	extlib/FreeImage.dll
 endif
 
 ifneq (,$(findstring CYGWIN,$(UNAME)))
@@ -36,6 +37,7 @@ ifneq (,$(findstring CYGWIN,$(UNAME)))
 	LDFLAGS		+= -mno-cygwin -s
 	EXEEXT		:= .exe
 	OS	:=	win32
+	EXTRAINSTALL	:=	extlib/FreeImage.dll
 endif
 
 ifneq (,$(findstring Darwin,$(UNAME)))
@@ -114,7 +116,7 @@ clean:
 	@rm -fr $(BUILD) $(OUTPUT)$(EXEEXT)
 
 install:
-	cp  $(OUTPUT) $(PREFIX)
+	cp  $(OUTPUT) $(EXTRAINSTALL) $(PREFIX)
 		
 #---------------------------------------------------------------------------------
 else
