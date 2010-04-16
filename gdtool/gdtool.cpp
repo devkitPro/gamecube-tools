@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 {
 	uint8 mode;
 	char *fname=NULL;
-	char *ofile = "a.out";
+	const char *ofile = "a.out";
 	int i,n;
 	bool	decode_unknown = false;
 	mode = M_NONE;
@@ -157,10 +157,10 @@ int main(int argc, char* argv[])
 		char *cad,*cad2;
 
 		fout = fopen(ofile, "wb");
-		cad2=strstr(ofile,".h");
+		cad2=strstr((char*)ofile,".h");
 		if(cad2)
 			{
-			char *end[2]={"", ","};
+			const char *end[2]={"", ","};
 			cad=cad2;
 			while(cad>ofile)
 				{
