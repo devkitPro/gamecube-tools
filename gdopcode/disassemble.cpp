@@ -343,7 +343,7 @@ char *gd_dis_opcode(gd_globals_t *gdg)
 	// printing
 	
 	if(gdg->decode_names)
-		{if(set_addr[gdg->pc] & 1) sprintf(buf,"LABEL_0x%4.4x:\r\n", gdg->pc);buf += strlen(buf);}
+		{if(set_addr[gdg->pc] & 1) sprintf(buf,"LABEL_0x%4.4x:\n", gdg->pc);buf += strlen(buf);}
 	
 	if (gdg->show_pc) sprintf(buf, "%04x ", gdg->pc);
 	else sprintf(buf, "	");
@@ -438,21 +438,21 @@ bool gd_dis_file(gd_globals_t *gdg, char *name, FILE *output)
 			{
 			int first=1;
 
-			fprintf(output, "\r\n/********************************/\r\n");
-			fprintf(output, "/**      REGISTER NAMES        **/\r\n");
-			fprintf(output, "/********************************/\r\n\r\n");
+			fprintf(output, "\n/********************************/\n");
+			fprintf(output, "/**      REGISTER NAMES        **/\n");
+			fprintf(output, "/********************************/\n\n");
 
 			for(n=0;n<32;n++)
-				fprintf(output, "%s:	equ	0x%4.4x\r\n", regnames[n].name, regnames[n].addr);
+				fprintf(output, "%s:	equ	0x%4.4x\n", regnames[n].name, regnames[n].addr);
 
-			fprintf(output, "\r\n/********************************/\r\n");
-			fprintf(output, "/**      REGISTER ADDRESS      **/\r\n");
-			fprintf(output, "/********************************/\r\n\r\n");
+			fprintf(output, "\n/********************************/\n");
+			fprintf(output, "/**      REGISTER ADDRESS      **/\n");
+			fprintf(output, "/********************************/\n\n");
 
 			n=0;
 			while(pdlabels[n].name[0]!=0)
 				{
-				fprintf(output, "%s:	equ	0x%4.4x\r\n", pdlabels[n].name, pdlabels[n].addr);
+				fprintf(output, "%s:	equ	0x%4.4x\n", pdlabels[n].name, pdlabels[n].addr);
 				n++;
 				}
 			for(n=0;n<65536;n++) // addresses out of the code
@@ -462,26 +462,26 @@ bool gd_dis_file(gd_globals_t *gdg, char *name, FILE *output)
 					if(first)
 						{
 						first=0;
-						fprintf(output, "\r\n/********************************/\r\n");
-						fprintf(output, "/**       OTHER ADDRESSES      **/\r\n");
-						fprintf(output, "/********************************/\r\n\r\n");
+						fprintf(output, "\n/********************************/\n");
+						fprintf(output, "/**       OTHER ADDRESSES      **/\n");
+						fprintf(output, "/********************************/\n\n");
 						}
-					fprintf(output, "LABEL_0x%4.4x:	equ	0x%4.4x\r\n", n, n);
+					fprintf(output, "LABEL_0x%4.4x:	equ	0x%4.4x\n", n, n);
 					}
 				}
-			fprintf(output, "\r\n/********************************/\r\n");
-			fprintf(output, "/**         START CODE         **/\r\n");
-			fprintf(output, "/********************************/\r\n\r\n");
-			fprintf(output, "	org	0x%4.4x\r\n\r\n", gdg->pc);
+			fprintf(output, "\n/********************************/\n");
+			fprintf(output, "/**         START CODE         **/\n");
+			fprintf(output, "/********************************/\n\n");
+			fprintf(output, "	org	0x%4.4x\n\n", gdg->pc);
 
-			fprintf(output,"START:\r\n");
+			fprintf(output,"START:\n");
 			}
 		// gdg->pc PC is now provided by one param
 		for (gdg->pc =start_pc ; gdg->pc < (start_pc+(size/2)) ;)
 			{
 			set_addr[gdg->pc]|=2;
 			if(pass==0) gd_dis_opcode(gdg);
-				else fprintf(output, "%s\r\n", gd_dis_opcode(gdg));
+				else fprintf(output, "%s\n", gd_dis_opcode(gdg));
 			}
 		}
 
