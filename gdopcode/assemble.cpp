@@ -77,7 +77,7 @@ typedef struct fass_t
 } fass_t;
 
 
-typedef enum err_t
+typedef enum
 {
 	ERR_OK = 0,
 	ERR_UNKNOWN,
@@ -102,18 +102,18 @@ typedef enum err_t
 	ERR_WRONG_PARAMETER_MID_ACC,
 	ERR_INVALID_REGISTER,
 	ERR_OUT_RANGE_NUMBER
-};
+} err_t;
 
-typedef enum segment_t
+typedef enum
 {
 	SEGMENT_CODE = 0,
 	SEGMENT_DATA,
 	SEGMENT_OVERLAY,
 	SEGMENT_MAX
-};
+} segment_t;
 
 
-char *err_string[] =
+const char *err_string[] =
 {
 	"",
 	"Unknown Error",
@@ -427,6 +427,19 @@ uint32 parse_exp_f(char *ptr, fass_t *fa)
 	return parse_exp(ptr);
 }
 
+uint32 parse_reg_f(char *name, fass_t *fa)
+{
+	uint32 i;
+	reg_t *reg;
+
+	for(i=0;i<registers_size;i++) {
+		reg = &registers[i];
+		if(strcmp(reg->name,name)==0)
+			return reg->regv;
+	}
+	return parse_exp_f(name,fa);
+}
+
 param_t *params;
 param_t *params_ext;
 uint32 params_count;
@@ -466,7 +479,7 @@ uint32 get_params(char *parstr, param_t *par, fass_t *fa)
 		case '@':
 			if (tmpstr[1] == '$')
 			{
-				par[i].val = parse_exp_f(tmpstr + 2, fa);
+				par[i].val = parse_reg_f(tmpstr + 2, fa);
 				par[i].type = P_PRG;
 			}
 			else
@@ -476,7 +489,7 @@ uint32 get_params(char *parstr, param_t *par, fass_t *fa)
 			}
 			break;
 		case '$':
-			par[i].val = parse_exp_f(tmpstr + 1, fa);
+			par[i].val = parse_reg_f(tmpstr + 1, fa);
 			par[i].type = P_REG;
 			break;
 		default:

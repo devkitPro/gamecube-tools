@@ -61,8 +61,45 @@ Examples:
 jnz, ifs, retlnz
 
 */
-
 #include "opcodes.h"
+
+reg_t registers[] =
+{
+	{ "AR0", 0x00 },
+	{ "AR1", 0x01 },
+	{ "AR2", 0x02 },
+	{ "AR3", 0x03 },
+	{ "IX0", 0x04 },
+	{ "IX1", 0x05 },
+	{ "IX2", 0x06 },
+	{ "IX3", 0x07 },
+	{ "R08", 0x08 },
+	{ "R09", 0x09 },
+	{ "R10", 0x0a },
+	{ "R11", 0x0b },
+	{ "ST0", 0x0c },
+	{ "ST1", 0x0d },
+	{ "ST2", 0x0e },
+	{ "ST3", 0x0f },
+	{ "ACC0.H", 0x10 },
+	{ "ACC1.H", 0x11 },
+	{ "CONFIG", 0x12 },
+	{ "STATUS", 0x13 },
+	{ "PROD.L", 0x14 },
+	{ "PROD.M1", 0x15 },
+	{ "PROD.H", 0x16 },
+	{ "PROD.M2", 0x17 },
+	{ "AX0.L", 0x18 },
+	{ "AX1.L", 0x19 },
+	{ "AX0.H", 0x1a },
+	{ "AX1.H", 0x1b },
+	{ "ACC0", 0x1c },
+	{ "ACC1", 0x1d },
+	{ "ACC0.L", 0x1c },
+	{ "ACC1.L", 0x1d },
+	{ "ACC0.M", 0x1e },
+	{ "ACC1.M", 0x1f },
+};
 
 opc_t opcodes[] =
 {
@@ -230,7 +267,7 @@ opc_t opcodes[] =
 
 	{ "CLRAL0",	0xFC00, 0xffff, 1 | P_EXT, 0, {}, }, // clear acl0 added by Hermes
 	{ "CLRAL1",	0xFD00, 0xffff, 1 | P_EXT, 0, {}, }, // clear acl1 added by Hermes
-	{ "CLRA0",	0x8400, 0xffff, 1 | P_EXT, 0, {}, }, // clear acc0 added by Hermes
+	{ "CLRA0",	0x8100, 0xffff, 1 | P_EXT, 0, {}, }, // clear acc0 added by Hermes
 	{ "CLRA1",	0x8900, 0xffff, 1 | P_EXT, 0, {}, }, // clear acc1 added by Hermes
 	{ "CLR",	0x8100, 0xf7ff, 1 | P_EXT, 1, {{P_ACC, 1, 0, 11, 0x0800}}, },
 	{ "CLRP",	0x8400, 0xffff, 1 | P_EXT, 0, {}, },
@@ -318,6 +355,7 @@ opc_t opcodes_ext[] = // revisar
 	{ "XXX",	0x0000, 0x0000, 1, 1, {{P_VAL, 1, 0, 0, 0x00ff}}, },
 };
 
+const uint32 registers_size = sizeof(registers)/sizeof(reg_t);
 const uint32 opcodes_size = sizeof(opcodes)/sizeof(opc_t);
 const uint32 opcodes_ext_size = sizeof(opcodes_ext)/sizeof(opc_t);
 

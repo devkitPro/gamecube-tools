@@ -24,13 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 $Log: not supported by cvs2svn $
 
 ====================================================================*/
-#ifdef _disassemble_h_
+#ifndef _disassemble_h_
 #define _disassemble_h_
 
-#pragma once
-
 bool disassemble(char *name, FILE *output);
-
 
 extern uint8	decode_names;
 extern uint8	decode_registers;

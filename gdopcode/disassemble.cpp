@@ -52,9 +52,9 @@ uint16 swap16(uint16 x);
 // predefined labels
 typedef struct pdlabel_t
 {
-	uint16	addr;
-	char	*name;
-	char	*description;
+	uint16		addr;
+	const char	*name;
+	const char	*description;
 } pdlabels_t;
 
 
@@ -119,7 +119,7 @@ pdlabel_t regnames[] =
 char set_addr[65536];
 
 char tmpstr[12];
-char * pdname(uint16 val)
+const char * pdname(uint16 val)
 {
 static char my_label[32];
 

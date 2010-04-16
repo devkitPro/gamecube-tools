@@ -37,7 +37,7 @@ Initial import
 
 #include "dtypes.h"
 
-typedef enum partype_t
+typedef enum
 {
 	P_NONE		= 0x0000,
 	P_VAL		= 0x0001,
@@ -59,29 +59,37 @@ typedef enum partype_t
 	P_REGS_MASK = 0x01f80,
 	P_REF		= P_REG | 0x4000,
 	P_PRG		= P_REF | P_REG,
-};
+} partype_t;
 
 #define P_EXT	0x80
+
+typedef struct reg_t
+{
+	const char	*name;
+	uint32		regv;
+} reg_t;
 
 typedef struct opcpar_t
 {
 	partype_t	type;
-	uint8	size;
-	uint8	loc;
-	sint8	lshift;
-	uint16	mask;
+	uint8		size;
+	uint8		loc;
+	sint8		lshift;
+	uint16		mask;
 } opcpar_t;
 
 typedef struct opc_t
 {
-	char	*name;
-	uint16	opcode;
-	uint16	opcode_mask;
-	uint8	size;
-	uint8	param_count;
+	const char	*name;
+	uint16		opcode;
+	uint16		opcode_mask;
+	uint8		size;
+	uint8		param_count;
 	opcpar_t	params[8];
 } opc_t;
 
+extern reg_t registers[];
+extern const uint32 registers_size;
 extern opc_t opcodes[];
 extern const uint32 opcodes_size;
 extern opc_t opcodes_ext[];
