@@ -44,7 +44,6 @@ Initial import
 
 #include <memory.h>
 #include <stdlib.h>
-
 #include "dtypes.h"
 #include "gdsp_tool.h"
 
@@ -153,7 +152,7 @@ int main(int argc, char* argv[])
 		
 		
 		char name[32];
-		int n;
+		int n,bsize;
 		char *cad,*cad2;
 
 		fout = fopen(ofile, "wb");
@@ -171,21 +170,31 @@ int main(int argc, char* argv[])
 			if(n>31) n=31;
 			memcpy(name,cad,n);name[n]=0;
 		
-			fprintf(fout, "/* gdtool v1.4 .h exporter by Hermes */\r\n\r\n");
+			bsize = (gdg->buffer_size*2+31) & ~31;
 
-			fprintf(fout, "#define size_%s %d\r\n\r\n",name, (gdg->buffer_size*2+31) & ~31); // padded to 32 bytes
+			fprintf(fout, "/* gdtool v1.4 .h exporter by Hermes */\n\n");
+
+			fprintf(fout, "#define %s_size %d\n\n",name,bsize); // padded to 32 bytes
 		
-			fprintf(fout, "unsigned short %s[size_%s/2] __attribute__ ((aligned (32))) ={\r\n\r\n",name, name);
-			cad=gdg->buffer;
+			fprintf(fout, "unsigned short %s[%d] __attribute__ ((aligned (32))) ={\n\n",name, (bsize>>1));
+
 			n=0;
+			bsize >>= 1;
+			cad=gdg->buffer;
 			while(n<gdg->buffer_size)
 				{
-				if(n & 15) fprintf(fout, " 0x%x%s", ((unsigned char) cad[1]) | (((unsigned char) cad[0])<<8), end[(n<gdg->buffer_size-1)]);
-				else	fprintf(fout, "\r\n	0x%x%s", ((unsigned char) cad[1]) | (((unsigned char) cad[0])<<8), end[(n<gdg->buffer_size-1)]);
+				if(n & 15) fprintf(fout, " 0x%04x%s", ((unsigned char) cad[1]) | (((unsigned char) cad[0])<<8), end[(n<bsize-1)]);
+				else	fprintf(fout, "\n	0x%04x%s", ((unsigned char) cad[1]) | (((unsigned char) cad[0])<<8), end[(n<bsize-1)]);
 				cad+=2;
 				n++;
 				}
-			fprintf(fout, "\r\n\r\n};\r\n\r\n");
+			while(n<bsize)
+				{
+				if(n & 15) fprintf(fout," 0x0000%s",end[(n<bsize-1)]);
+				else fprintf(fout,"\n 0x0000%s",end[(n<bsize-1)]);
+				n++;
+				}
+			fprintf(fout, "\n\n};\n\n");
 			}
         else
 		fwrite(gdg->buffer, 1, gdg->buffer_size * 2, fout);
