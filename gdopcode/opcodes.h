@@ -37,6 +37,14 @@ Initial import
 
 #include "dtypes.h"
 
+// used to mark an opcode to concatenate with an extended opcode
+#define P_EXT			0x80
+
+// logic and arithmetic shift right need in assemble and disassembl
+// special treatmeant, therefor their opc binary encoding is held here again.
+#define P_OPC_LSR		0x1440
+#define P_OPC_ASR		0x14c0
+
 typedef enum
 {
 	P_NONE		= 0x0000,
@@ -44,24 +52,32 @@ typedef enum
 	P_IMM		= 0x0002,
 	P_MEM		= 0x0003,
 	P_STR		= 0x0004,
+	P_ADDR_I	= 0x0005,
+	P_ADDR_D	= 0x0006,
 	P_REG		= 0x8000,
+	P_REG04		= P_REG | 0x0400,
 	P_REG08		= P_REG | 0x0800,
-	P_REG10		= P_REG | 0x1000,
+	P_ACCH		= P_REG | 0x1000,
 	P_REG18		= P_REG | 0x1800,
-	P_REG19		= P_REG | 0x1900,
-	P_REGM18	= P_REG | 0x1810, // used in multiply instructions
-	P_REGM19	= P_REG | 0x1910, // used in multiply instructions
-	P_REG1A		= P_REG | 0x1a00,
-	P_REG1C		= P_REG | 0x1c00,
-	P_ACC		= P_REG | 0x1c10, // used for global accum
-	P_ACCD		= P_REG | 0x1c80,
-	P_ACCMID	= P_REG | 0x1e00, // used for mid accum
-	P_REGS_MASK = 0x01f80,
+	P_ACXXL		= P_REG | 0x1810,
+	P_ACXHL0	= P_REG | 0x1820, // used in multiply instructions
+	P_ACXHL1	= P_REG | 0x1900, // used in multiply instructions
+	P_ACXXH		= P_REG | 0x1a00, 
+	P_ACCL		= P_REG | 0x1c00, // used for low part of accum
+	P_ACCLM		= P_REG | 0x1c10,
+	P_ACCM		= P_REG | 0x1e00, // used for mid part of accum
+
+	P_ACCM_D	= P_REG | 0x1e80,
+	P_ACC		= P_REG | 0x2000,
+	P_ACC_D		= P_REG | 0x2080,
+
+	P_ACX		= P_REG | 0x2200,
+
 	P_REF		= P_REG | 0x4000,
 	P_PRG		= P_REF | P_REG,
-} partype_t;
 
-#define P_EXT	0x80
+	P_REGS_MASK = 0x03f80,
+} partype_t;
 
 typedef struct reg_t
 {
