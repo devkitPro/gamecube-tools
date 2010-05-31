@@ -40,7 +40,6 @@ Initial import
 #include <stdio.h>
 #include <memory.h>
 #include <stdlib.h>
-
 #include "dtypes.h"
 #include "opcodes.h"
 #include "disassemble.h"
@@ -98,8 +97,14 @@ typedef enum
 	ERR_NO_MATCHING_BRACKETS,
 	ERR_EXT_CANT_EXTEND_OPCODE,
 	ERR_EXT_PAR_NOT_EXT,
+	ERR_WRONG_PARAMETER_ACX,
+	ERR_WRONG_PARAMETER_HIGH_ACX,
+	ERR_WRONG_PARAMETER_LOW_ACX,
+	ERR_WRONG_PARAMETER_ACX0_LOWHI,
+	ERR_WRONG_PARAMETER_ACX1_LOWHI,
 	ERR_WRONG_PARAMETER_ACC,
 	ERR_WRONG_PARAMETER_MID_ACC,
+	ERR_WRONG_PARAMETER_LOW_ACC,
 	ERR_INVALID_REGISTER,
 	ERR_OUT_RANGE_NUMBER
 } err_t;
@@ -134,8 +139,14 @@ const char *err_string[] =
 	"No matching brackets",
 	"This opcode cannot be extended",
 	"Given extending params for non extensible opcode",
-	"Wrong parameter: must be accumulator register (r1c-r1d)",
-	"Wrong parameter: must be mid accumulator register",
+	"Wrong parameter: must be secondary accumulator register",
+	"Wrong parameter: must be high part of secondary accumulator register",
+	"Wrong parameter: must be low part of secondary accumulator register",
+	"Wrong parameter: must be low or high part of secondary accumulator register 0",
+	"Wrong parameter: must be low or high part of secondary accumulator register 1",
+	"Wrong parameter: must be accumulator register",
+	"Wrong parameter: must be mid part of accumulator register",
+	"Wrong parameter: must be low part of accumulator register",
 	"Invalid register",
 	"Number out of range"
 };
@@ -434,7 +445,7 @@ uint32 parse_reg_f(char *name, fass_t *fa)
 
 	for(i=0;i<registers_size;i++) {
 		reg = &registers[i];
-		if(strcmp(reg->name,name)==0)
+		if(strncmp(reg->name,name,strlen(reg->name))==0)
 			return reg->regv;
 	}
 	return parse_exp_f(name,fa);
@@ -530,23 +541,24 @@ opc_t *find_opcode(char *opcode, uint32 par_count, opc_t *opcod, uint32 opcod_si
 uint16 get_mask(uint16 mask)
 {
 	while(!(mask & 1)) mask>>=1;
-return mask;
+	return mask;
 }
 
 bool verify_params(opc_t *opc, param_t *par, uint32 count, fass_t *fa)
 {
 	uint32 i;
-	int value;
+	int value,regval;
 	unsigned int valueu;
 
 
 	for(i = 0 ; i < count ; i++)
 	{
-	current_param=i+1;
-
+		current_param=i+1;
 		if (opc->params[i].type != par[i].type || (par[i].type & P_REG))
 		{
 			
+			if(par[i].type==P_VAL && (opc->params[i].type==P_ADDR_I || opc->params[i].type==P_ADDR_D)) continue;
+
 			if ((opc->params[i].type & P_REG) && (par[i].type & P_REG))
 				{
 				// modified by Hermes: test the register range
@@ -554,38 +566,105 @@ bool verify_params(opc_t *opc, param_t *par, uint32 count, fass_t *fa)
 				switch((unsigned)opc->params[i].type)
 					{
 					case P_REG18:
-					case P_REG19:
-					case P_REG1A:
-					case P_REG1C:
+					case P_ACCLM:
+						regval = par[i].val&0xff;
 						value=(opc->params[i].type>>8) & 31;
-						if((int)par[i].val<value || (int)par[i].val>value+get_mask(opc->params[i].mask))
-							{
+						if(regval<value || regval>(value + get_mask(opc->params[i].mask)))
+						{
 							parse_error(ERR_INVALID_REGISTER, fa);
-							}
+						}
 					break;
 					case P_PRG:
 						if((int)par[i].val<0 || (int)par[i].val>0x3)
-							{
+						{
 							parse_error(ERR_INVALID_REGISTER, fa);
-							}
+						}
 					break;
 
 					case P_ACC:
-						if((int)par[i].val<0x1c || (int)par[i].val>0x1d)
-							{
+						if((int)par[i].val<0x201c || (int)par[i].val>0x201d)
+						{
 							if(par[i].val>=0x1e && par[i].val<=0x1f)
-								fprintf(stderr, "WARNING: $ACM%d register used instead $ACC%d register Line: %d Param: %d\n",
+								fprintf(stderr, "WARNING: $ACC%d.M register used instead $ACC%d register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else if(par[i].val>=0x1c && par[i].val<=0x1d)
+								fprintf(stderr, "WARNING: $ACC%d.L register used instead $ACC%d register Line: %d Param: %d\n",
 										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
 							else
 								parse_error(ERR_WRONG_PARAMETER_ACC, fa);
-							}
-					break;
-					case P_ACCMID:
+						} 					break;
+					case P_ACCM:
 						if((int)par[i].val<0x1e || (int)par[i].val>0x1f)
-							{
-							parse_error(ERR_WRONG_PARAMETER_MID_ACC, fa);
-							}
-
+						{
+							if(par[i].val>=0x1c && par[i].val<=0x1d)
+								fprintf(stderr, "WARNING: $ACC%d.L register used instead $ACC%d.M register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else if(par[i].val>=0x201c && par[i].val<=0x201d)
+								fprintf(stderr, "WARNING: $ACC%d register used instead $ACC%d.M register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else
+								parse_error(ERR_WRONG_PARAMETER_MID_ACC, fa);
+						}
+					break;
+					case P_ACCL:
+						if((int)par[i].val<0x1c || (int)par[i].val>0x1d)
+						{
+							if(par[i].val>=0x1e && par[i].val<=0x1f)
+								fprintf(stderr, "WARNING: $ACC%d.M register used instead $ACC%d.L register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else if(par[i].val>=0x201c && par[i].val<=0x201d)
+								fprintf(stderr, "WARNING: $ACC%d register used instead $ACC%d.L register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else
+								parse_error(ERR_WRONG_PARAMETER_LOW_ACC, fa);
+						}
+					break;
+					case P_ACX:
+						if((int)par[i].val<0x2018 || (int)par[i].val>0x2019)
+						{
+							if(par[i].val>=0x18 && par[i].val<=0x19)
+								fprintf(stderr, "WARNING: $ACX%d.L register used instead $ACX%d register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else if(par[i].val>=0x1a && par[i].val<=0x1b)
+								fprintf(stderr, "WARNING: $ACX%d.H register used instead $ACX%d register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else
+								parse_error(ERR_WRONG_PARAMETER_ACX, fa);
+						}
+					break;
+					case P_ACXXL:
+						if((int)par[i].val<0x18 || (int)par[i].val>0x19) {
+							if(par[i].val>=0x1a && par[i].val<=0x1b)
+								fprintf(stderr, "WARNING: $ACX%d.H register used instead $ACX%d.L register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else if(par[i].val>=0x2018 && par[i].val<=0x2019)
+								fprintf(stderr, "WARNING: $ACX%d register used instead $ACX%d.L register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else
+								parse_error(ERR_WRONG_PARAMETER_LOW_ACX,fa);
+						}
+					break;
+					case P_ACXXH:
+						if((int)par[i].val<0x1a || (int)par[i].val>0x1b) {
+							if(par[i].val>=0x18 && par[i].val<=0x19)
+								fprintf(stderr, "WARNING: $ACX%d.L register used instead $ACX%d.H register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else if(par[i].val>=0x2018 && par[i].val<=0x2019)
+								fprintf(stderr, "WARNING: $ACX%d register used instead $ACX%d.H register Line: %d Param: %d\n",
+										(par[i].val & 1), (par[i].val & 1), fa->code_line, current_param);
+							else
+								parse_error(ERR_WRONG_PARAMETER_HIGH_ACX,fa);
+						}
+					break;
+					case P_ACXHL0:
+						if((int)par[i].val!=0x18 && (int)par[i].val!=0x1a){
+							parse_error(ERR_WRONG_PARAMETER_ACX0_LOWHI,fa);
+						}
+					break;
+					case P_ACXHL1:
+						if((int)par[i].val!=0x19 && (int)par[i].val!=0x1b){
+							parse_error(ERR_WRONG_PARAMETER_ACX1_LOWHI,fa);
+						}
 					break;
 					}
 				
@@ -593,7 +672,7 @@ bool verify_params(opc_t *opc, param_t *par, uint32 count, fass_t *fa)
 				
 				continue;
 				}
-			switch(par[i].type & (P_REG | P_VAL | P_MEM | P_IMM))
+			switch(par[i].type & (P_REG | P_VAL | P_MEM | P_IMM | P_STR | P_ADDR_I | P_ADDR_D))
 			{
 			case P_REG:
 				parse_error(ERR_EXPECTED_PARAM_REG, fa);
@@ -612,7 +691,7 @@ bool verify_params(opc_t *opc, param_t *par, uint32 count, fass_t *fa)
 			break;
 		}
 	else
-	if ((opc->params[i].type & 3)!=0 && (par[i].type & 3)!=0)
+	if ((opc->params[i].type & 7)!=0 && (par[i].type & 7)!=0)
 		{// modified by Hermes: test NUMBER range
 		value=get_mask(opc->params[i].mask);
 
@@ -635,12 +714,12 @@ bool verify_params(opc_t *opc, param_t *par, uint32 count, fass_t *fa)
 					parse_error(ERR_OUT_RANGE_NUMBER, fa);
 					}
 			else
-			if((int)par[i].val<-((value>>1)+1))
+			if((int)par[i].val<-(value+1))
 				{
 				if(value<128)
-					fprintf(stderr,"Value must be from -0x%x to 0x%x\n",((value>>1)+1), ((value>>1)));
+					fprintf(stderr,"Value must be from -0x%x to 0x%x\n",(value+1), value);
 				else
-					fprintf(stderr,"Value must be from -0x%x to 0x%x or 0x0 to 0x%x\n",((value>>1)+1), ((value>>1)),value);
+					fprintf(stderr,"Value must be from -0x%x to 0x%x or 0x0 to 0x%x\n",(value+1), value ,value);
 
 				parse_error(ERR_OUT_RANGE_NUMBER, fa);
 				}
@@ -701,10 +780,11 @@ void build_code(opc_t *opc, param_t *par, uint32 par_count, uint16 *outbuf)
 	{
 		uint16 v16;
 		uint16 t16;
-		if(opc->params[i].type != P_ACCD)
+		if(opc->params[i].type != P_ACC_D && opc->params[i].type != P_ACCM_D)
 		{
 			t16 = swap16(outbuf[cur_addr + opc->params[i].loc]);
 			v16 = par[i].val;
+			if(opc->params[i].type==P_IMM && (opc->opcode==P_OPC_LSR || opc->opcode==P_OPC_ASR)) v16 = (uint16)(0 - v16);
 			if (opc->params[i].lshift > 0)
 				v16 <<= opc->params[i].lshift;
 			else
