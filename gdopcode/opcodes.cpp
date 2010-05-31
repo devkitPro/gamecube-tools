@@ -61,7 +61,6 @@ Examples:
 jnz, ifs, retlnz
 
 */
-//#include "stdafx.h"
 #include "opcodes.h"
 
 reg_t registers[] =

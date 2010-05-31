@@ -36,7 +36,6 @@ Initial import
 #include <stdio.h>
 #include <memory.h>
 #include <stdlib.h>
-//#include "stdafx.h"
 #include "dtypes.h"
 #include "opcodes.h"
 #include "gdsp_tool.h"
