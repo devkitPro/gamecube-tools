@@ -36,7 +36,7 @@ Initial import
 #include <stdio.h>
 #include <memory.h>
 #include <stdlib.h>
-
+//#include "stdafx.h"
 #include "dtypes.h"
 #include "opcodes.h"
 #include "gdsp_tool.h"
@@ -65,12 +65,18 @@ pdlabel_t pdlabels[] =
 	{ 0xffcd, "DSPA", "DSP DMA DMEM Address", },
 	{ 0xffce, "DSMAH", "DSP DMA Mem Address H", },
 	{ 0xffcf, "DSMAL", "DSP DMA Mem Address L", },
+	{ 0xffd1, "ACFMT", "", },
 	{ 0xffd4, "ACSAH", "", },
 	{ 0xffd5, "ACSAL", "", },
 	{ 0xffd6, "ACEAH", "", },
 	{ 0xffd7, "ACEAL", "", },
 	{ 0xffd8, "ACCAH", "", },
 	{ 0xffd9, "ACCAL", "", },
+	{ 0xffda, "ACPDS", "", },
+	{ 0xffdb, "ACYN1", "", },
+	{ 0xffdc, "ACYN2", "", },
+	{ 0xffdd, "ACDAT", "", },
+	{ 0xffde, "ACGAN", "", },
 	{ 0xffef, "AMDM", "ARAM DMA Request Mask", },
 	{ 0xfffb, "DIRQ", "DSP Irq Request", },
 	{ 0xfffc, "DMBH", "DSP Mailbox H", },
@@ -90,30 +96,36 @@ pdlabel_t regnames[] =
 	{ 0x05, "IX1", "Register 00", },
 	{ 0x06, "IX2", "Register 00", },
 	{ 0x07, "IX3", "Register 00", },
-	{ 0x08, "R08", "Register 00", },
-	{ 0x09, "R09", "Register 00", },
-	{ 0x0a, "R0A", "Register 00", },
-	{ 0x0b, "R0B", "Register 00", },
+	{ 0x08, "WR0", "Register 00", },
+	{ 0x09, "WR1", "Register 00", },
+	{ 0x0a, "WR2", "Register 00", },
+	{ 0x0b, "WR3", "Register 00", },
 	{ 0x0c, "ST0", "Register 00", },
 	{ 0x0d, "ST1", "Register 00", },
 	{ 0x0e, "ST2", "Register 00", },
 	{ 0x0f, "ST3", "Register 00", },
-	{ 0x10, "ACH0", "Accumulator High 0", },
-	{ 0x11, "ACH1", "Accumulator High 1", },
+	{ 0x10, "ACC0.H", "Accumulator High 0", },
+	{ 0x11, "ACC1.H", "Accumulator High 1", },
 	{ 0x12, "CONFIG", "Register 00", },
-	{ 0x13, "SR", "Register 00", },
-	{ 0x14, "PRODL", "Register 00", },
-	{ 0x15, "PRODM", "Register 00", },
-	{ 0x16, "PRODH", "Register 00", },
-	{ 0x17, "PRODM2", "Register 00", },
-	{ 0x18, "AXL0", "Register 00", },
-	{ 0x19, "AXL1", "Register 00", },
-	{ 0x1a, "AXH0", "Register 00", },
-	{ 0x1b, "AXH1", "Register 00", },
-	{ 0x1c, "ACL0", "Register 00", },
-	{ 0x1d, "ACL1", "Register 00", },
-	{ 0x1e, "ACM0", "Register 00", },
-	{ 0x1f, "ACM1", "Register 00", },
+	{ 0x13, "STATUS", "Register 00", },
+	{ 0x14, "PROD.L", "Register 00", },
+	{ 0x15, "PROD.M1", "Register 00", },
+	{ 0x16, "PROD.H", "Register 00", },
+	{ 0x17, "PROD.M2", "Register 00", },
+	{ 0x18, "ACX0.L", "Register 00", },
+	{ 0x19, "ACX1.L", "Register 00", },
+	{ 0x1a, "ACX0.H", "Register 00", },
+	{ 0x1b, "ACX1.H", "Register 00", },
+	{ 0x1c, "ACC0.L", "Register 00", },
+	{ 0x1d, "ACC1.L", "Register 00", },
+	{ 0x1e, "ACC0.M", "Register 00", },
+	{ 0x1f, "ACC1.M", "Register 00", },
+
+	{ 0x1e, "ACC0", "Register 00", },
+	{ 0x1f, "ACC1", "Register 00", },
+
+	{ 0x18, "ACX0", "Register 00", },
+	{ 0x19, "ACX1", "Register 00", },
 };
 
 char set_addr[65536];
@@ -169,11 +181,11 @@ char *gd_dis_params(gd_globals_t *gdg, opc_t *opc, uint16 op1, uint16 op2, char 
 
 		uint32 type;
 		type = opc->params[j].type;
-		if((type & 0xff)==0x10) type &=0xff00;
+		if((type & 0xff)==0x10 || (type & 0xff)==0x20 || (type & 0xff)==0x30) type &=0xff00;
 		if (type & P_REG)
 		{
 
-			if (type == P_ACCD)
+			if (type == P_ACC_D ||type==P_ACCM_D)
 				val = (~val & 0x1) | ((type & P_REGS_MASK) >> 8);
 			else
 				val |= (type & P_REGS_MASK) >> 8;
@@ -191,6 +203,8 @@ char *gd_dis_params(gd_globals_t *gdg, opc_t *opc, uint16 op1, uint16 op2, char 
 			else sprintf(buf, "@$%d", val);
 			break;
 		case P_VAL:
+		case P_ADDR_I:
+		case P_ADDR_D:	
 			if (gdg->decode_names)
 				sprintf(buf, "%s", pdname(val));
 			else
@@ -199,9 +213,9 @@ char *gd_dis_params(gd_globals_t *gdg, opc_t *opc, uint16 op1, uint16 op2, char 
 		case P_IMM:
 			if (opc->params[j].size != 2)
 				{
-				if(opc->params[j].mask==0x007f) // LSL, LSR, ASL, ASR
+				if(opc->opcode==P_OPC_LSR || opc->opcode==P_OPC_ASR)
 					{
-					sprintf(buf, "#%d", val<64 ? val: -(0x80-val));
+						sprintf(buf,"#%d", (0x40 - val));
 					}
 				else
 					sprintf(buf, "#0x%02x", val);
@@ -294,7 +308,8 @@ char *gd_dis_opcode(gd_globals_t *gdg)
 	opc_t	*opc_ext=NULL;
 	uint16	pc;
 	char	*buf = gdg->buffer;
-	bool	extended;
+	bool	extended = false;
+	bool	only7bits = false;
 
 	pc = gdg->pc;
 	*buf = '\0';
@@ -309,11 +324,7 @@ char *gd_dis_opcode(gd_globals_t *gdg)
 	// find opcode
 	for(j = 0 ; j < opcodes_size ; j++)
 	{
-		uint16 mask;
-		if (opcodes[j].size & P_EXT)
-			mask = opcodes[j].opcode_mask & 0xff00;
-		else
-			mask = opcodes[j].opcode_mask;
+		uint16 mask = opcodes[j].opcode_mask;
 		if ((op1 & mask) == opcodes[j].opcode)
 		{
 			opc = &opcodes[j];
@@ -321,7 +332,10 @@ char *gd_dis_opcode(gd_globals_t *gdg)
 		}
 	}
 
-	if (opc->size & P_EXT && op1 & 0x00ff)
+	if((opc->opcode>>12)==0x03 && op1&0x7f) {
+		extended = true;
+		only7bits = true;
+	} else if((opc->opcode>>12)>0x03 && op1&0xff) 
 		extended = true;
 	else
 		extended = false;
@@ -332,10 +346,17 @@ char *gd_dis_opcode(gd_globals_t *gdg)
 		// find opcode
 		for(j = 0 ; j < opcodes_ext_size ; j++)
 		{
-			if ((op1 & opcodes_ext[j].opcode_mask) == opcodes_ext[j].opcode)
-			{
-				opc_ext = &opcodes_ext[j];
-				break;
+			if(only7bits==true) {
+				if(((op1&0x7f)&opcodes_ext[j].opcode_mask)==opcodes_ext[j].opcode) {
+					opc_ext = &opcodes_ext[j];
+					break;
+				}
+			} else {
+				if ((op1 & opcodes_ext[j].opcode_mask) == opcodes_ext[j].opcode)
+				{
+					opc_ext = &opcodes_ext[j];
+					break;
+				}
 			}
 		}
 	}
