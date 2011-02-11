@@ -238,7 +238,14 @@ void read_elf_segments(DOL_map *map, const char *elf)
 					if(filesz == 0) {
 						// BSS segment
 						if(map->flags & HAVE_BSS) {
-							fprintf(stderr, "Warning: skipping extra BSS segment %d\n", i);
+							uint32_t start = swap32(map->header.bss_addr);
+							uint32_t size = swap32(map->header.bss_size);
+							if ( (start+size) == paddr) {
+								fprintf(stderr,"concatenating BSS segment %d\n",i);
+								map->header.bss_size = swap32(size+memsz);
+							} else {
+								fprintf(stderr, "Warning: skipping extra BSS segment %d\n", i);
+							}
 						} else {
 							map->header.bss_addr = swap32(paddr);
 							map->header.bss_size = swap32(memsz);
@@ -258,18 +265,6 @@ void read_elf_segments(DOL_map *map, const char *elf)
 						map->header.data_size[map->data_cnt] = swap32(filesz);
 						map->data_elf_off[map->data_cnt] = offset;
 						map->data_cnt++;
-						if(filesz < memsz) {
-							if(verbosity >= 1)
-								fprintf(stderr, "Creating BSS segment from tail of DATA segment %i (at 0x%08x, size 0x%x)\n",
-								        i, paddr + filesz, memsz - filesz);
-							if(map->flags & HAVE_BSS) {
-								fprintf(stderr, "Warning: skipping extra BSS segment tail (for segment %d)\n", i);
-							} else {
-								map->header.bss_addr = swap32(paddr + filesz);
-								map->header.bss_size = swap32(memsz - filesz);
-								map->flags |= HAVE_BSS;
-							}
-						}
 					}
 				}
 			
