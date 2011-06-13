@@ -241,10 +241,7 @@ void read_elf_segments(DOL_map *map, const char *elf)
 							uint32_t start = swap32(map->header.bss_addr);
 							uint32_t size = swap32(map->header.bss_size);
 							if ( (start+size) == paddr) {
-								fprintf(stderr,"concatenating BSS segment %d\n",i);
 								map->header.bss_size = swap32(size+memsz);
-							} else {
-								fprintf(stderr, "Warning: skipping extra BSS segment %d\n", i);
 							}
 						} else {
 							map->header.bss_addr = swap32(paddr);
