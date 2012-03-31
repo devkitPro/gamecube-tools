@@ -25,16 +25,19 @@
 #ifndef __DXTN_H__
 #define __DXTN_H__
 
+#ifndef __APPLE__
+	#include <GL/gl.h>
+	#include <GL/glext.h>
+#else
+	#include <OpenGL/gl.h>
+	#include <OpenGL/glext.h>
+#endif
+
 #ifndef _LIBDXTN_INTERNAL
 	#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT   0x83F0
 	#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT  0x83F1
 	#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT  0x83F2
 	#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT  0x83F3
-
-	typedef int GLint;
-	typedef unsigned char GLubyte;
-	typedef void GLvoid;
-	typedef unsigned int GLenum;
 #endif
 
 #define UBYTE_TO_CHAN(b)  (b)
