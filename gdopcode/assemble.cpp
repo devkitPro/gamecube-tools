@@ -1,7 +1,5 @@
 /*====================================================================
 
-$Id: assemble.cpp,v 1.3 2008-11-11 01:04:26 wntrmute Exp $
-
 project:      GameCube DSP Tool (gcdsp)
 mail:		  duddie@walla.com
 
@@ -20,20 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-Revision 1.4  2008/10/04 10:30:00  Hermes
-added function to export the code to .h file
-added support for '/ *' '* /' and '//' for comentaries
-added some sintax detection when use registers
-
-$Log: not supported by cvs2svn $
-Revision 1.2  2005/09/14 02:19:29  wntrmute
-added header guards
-use standard main function
-
-Revision 1.1  2005/08/24 22:13:34  wntrmute
-Initial import
-
 
 ====================================================================*/
 
