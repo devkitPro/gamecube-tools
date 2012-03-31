@@ -26,7 +26,7 @@
 #ifndef SQUISH_CLUSTERFIT_H
 #define SQUISH_CLUSTERFIT_H
 
-#include <squish.h>
+#include "squish.h"
 #include "maths.h"
 #include "simd.h"
 #include "colourfit.h"
