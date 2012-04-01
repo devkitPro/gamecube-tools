@@ -27,10 +27,8 @@
 
 #ifndef __APPLE__
 	#include <GL/gl.h>
-	#include <GL/glext.h>
 #else
 	#include <OpenGL/gl.h>
-	#include <OpenGL/glext.h>
 #endif
 
 #ifndef _LIBDXTN_INTERNAL

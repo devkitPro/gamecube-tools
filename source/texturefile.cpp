@@ -1,10 +1,10 @@
+extern "C" {
+	#include <dxtn.h>
+}
 #include "stdafx.h"
 #include <squish.h>
 #include "texturefile.h"
 
-extern "C" {
-	#include <dxtn.h>
-}
 
 const unsigned int CTextureFile::tplTexDescSize = 8;
 const unsigned int CTextureFile::tplHdrSize = 12;

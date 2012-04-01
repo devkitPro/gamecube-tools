@@ -23,15 +23,6 @@
  */
 
 #include <stdio.h>
-
-#ifndef __APPLE__
-        #include <GL/gl.h>
-        #include <GL/glext.h>
-#else
-        #include <OpenGL/gl.h>
-        #include <OpenGL/glext.h>
-#endif
-
 #include "dxtn.h"
 
 typedef GLubyte GLchan;
