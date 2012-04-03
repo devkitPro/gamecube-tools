@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdlib.h>
 #include "dtypes.h"
 #include "gdsp_tool.h"
-
+#include <string.h>
 #ifdef _MSVC_
 #pragma warning(disable:4996)
 #endif
