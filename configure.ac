@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([gxtexconv],[0.1.8],[davem@devkitpro.org])
+AC_INIT([gxtexconv],[0.1.9],[davem@devkitpro.org])
 AC_CONFIG_SRCDIR([source/converter.cpp])
 
 AM_INIT_AUTOMAKE([1.10])
