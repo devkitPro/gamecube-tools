@@ -1,5 +1,4 @@
 # Makefile.am -- Process this file with automake to produce Makefile.in
-<<<<<<< HEAD
 
 ACLOCAL_AMFLAGS = -I m4
 
