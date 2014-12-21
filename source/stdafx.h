@@ -37,16 +37,23 @@
 
 // TODO: reference additional headers your program requires here
 
-#define _SHIFTL(v,s,w)							((unsigned int)(((unsigned int)(v)&((0x01<<(w))-1))<<(s)))
-#define _SHIFTR(v,s,w)							((unsigned int)(((unsigned int)(v)>>(s))&((0x01<<(w))-1)))
+#define _SHIFTL(v,s,w)	((unsigned int)(((unsigned int)(v)&((0x01<<(w))-1))<<(s)))
+#define _SHIFTR(v,s,w)	((unsigned int)(((unsigned int)(v)>>(s))&((0x01<<(w))-1)))
+#ifndef LOWORD
+#define LOWORD(l)	((unsigned short)(l))
+#endif
+#ifndef HIWORD
+#define HIWORD(l)	((unsigned short)(((unsigned long)(l) >> 16) & 0xFFFF))
+#endif
+#ifndef LOBYTE
+#define LOBYTE(w)	((unsigned char)(w))
+#endif
+#ifndef HIBYTE
+#define HIBYTE(w)	((unsigned char)(((unsigned short)(w) >> 8) & 0xFF))
+#endif
 
-#define LOWORD(l)   					        ((unsigned short)(l))
-#define HIWORD(l)   					        ((unsigned short)(((unsigned long)(l) >> 16) & 0xFFFF))
-#define LOBYTE(w)   					        ((unsigned char)(w))
-#define HIBYTE(w)   					        ((unsigned char)(((unsigned short)(w) >> 8) & 0xFF))
-
-#define SwapInt(n)								(LOBYTE(LOWORD(n))<<24) + (HIBYTE(LOWORD(n))<<16) + (LOBYTE(HIWORD(n))<<8) + HIBYTE(HIWORD(n))
-#define SwapShort(n)							(LOBYTE(n)<<8) + HIBYTE(n)
+#define SwapInt(n)	(LOBYTE(LOWORD(n))<<24) + (HIBYTE(LOWORD(n))<<16) + (LOBYTE(HIWORD(n))<<8) + HIBYTE(HIWORD(n))
+#define SwapShort(n)	(LOBYTE(n)<<8) + HIBYTE(n)
 
 static inline float SwapFloat(float n)
 {
