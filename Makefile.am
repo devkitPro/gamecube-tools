@@ -27,22 +27,24 @@ libsquish_la_SOURCES	= squish/source/alpha.cpp squish/source/alpha.h squish/sour
 
 libsquish_la_CPPFLAGS	= -fvisibility=hidden
 
-gxtexconv_SOURCES	= source/converter.cpp source/converter.h source/gxtexconv.cpp source/image.cpp \
-			  source/image.h source/parser.cpp source/parser.h source/stdafx.cpp source/stdafx.h \
-			  source/texturefile.cpp source/texturefile.h source/tfbinary.cpp source/tfbinary.h \
-			  source/tfbinarytdf.cpp source/tfbinarytdf.h source/tokenstring.cpp source/tokenstring.h
-
-gxtexconv_LDADD		= libsquish.la libdxtn.la $(FREEIMAGE_LIBS)
+gxtexconv_SOURCES	= gxtool/converter.cpp gxtool/converter.h gxtool/gxtexconv.cpp gxtool/image.cpp \
+			  gxtool/image.h gxtool/parser.cpp gxtool/parser.h gxtool/stdafx.cpp gxtool/stdafx.h \
+			  gxtool/texturefile.cpp gxtool/texturefile.h gxtool/tfbinary.cpp gxtool/tfbinary.h \
+			  gxtool/tfbinarytdf.cpp gxtool/tfbinarytdf.h gxtool/tokenstring.cpp gxtool/tokenstring.h
 
 gxtexconv_CPPFLAGS	= -fvisibility=hidden -I$(top_srcdir)/dxtn/source -I$(top_srcdir)/squish/source
 
-gcdsptool_SOURCES	= gdtool/gdsp_tool.h gdtool/gdtool.cpp
+gxtexconv_LDADD		= libsquish.la libdxtn.la $(FREEIMAGE_LIBS)
 
-gcdsptool_LDADD		= libgdopcode.la
+
+gcdsptool_SOURCES	= gdtool/gdsp_tool.h gdtool/gdtool.cpp
 
 gcdsptool_CPPFLAGS 	= -I$(top_srcdir)/gdopcode
 
-elf2dol_SOURCES	= elf2dol.c
+gcdsptool_LDADD		= libgdopcode.la
+
+
+elf2dol_SOURCES		= elftool/elf2dol.c
 
 EXTRA_DIST	= autogen.sh doc/GC_DSP.doc doc/GC_DSP.pdf doc/manual.txt doc/opcodes_list.xls \
 		  doc/operation.txt doc/reverse.txt doc/reverse_new.txt
