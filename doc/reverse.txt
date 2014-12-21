@@ -1,0 +1,263 @@
+EXCEPTIONS:
+-----------
+
+Vector 01 - stack overflow/underflow
+Vector 05 - ACCA > ACCH enabled: bit 0x200 (9) of $sr
+
+ST0		depth 8
+ST1		depth 4
+ST2/3	depth 4
+
+Exception processing:
+Exception $pc -> $ST0
+Exception $sr -> $ST1
+
+
+TODO:
+-----
+
+CHECKED if CMPI (0x0280) compares whole $acD or $amD
+Yes.
+Although compare acc with 0x0001
+0x0000010000 gives 25
+0x0000010001 gives 21
+0x0000000001 gives 20
+
+
+CHECKED if ANDF/ANDCF/ORF modify other flags! NO. Modify only LZ
+
+CHECKED 0xf800 (ADDPAXZ)	// exact operation
+
+
+CHECK 0x001?
+ADDARN
+|0000 0000 0001 bbaa|
+$a += $(4+b)
+
+|0000 0000 0000 10aa|
+$a++
+
+|0000 0000 0000 01aa|
+$a--
+
+
+REVERSE 0x02ca fully
+0x02ca
+$ac0 >>= 3
+
+BUILD cc conditions
+0x027x
+
+CHECKED check if 0x6000 (MOVR) clears $acD.l (yes!)
+CHECKED check 0x6800 (MOVAX)
+
+CHECKED check if 0xe800 (MADDC/MSUBC) uses 19/1b or 18/1a pair
+(bit 8)1a/1b * (bit 9) 1e/1f
+
+
+0x0277 if sr&1 execute next opcode
+
+0xa100 - 0xb100
+0xa1 used before CMP, strange
+0xb1 - rather test
+
+0xa900 not used
+
+
+0x3e00 $1e |= $1f
+0x3f00 $1f |= $1e
+
+
+PROGRESS LOG:
+-------------
+
+20050318 - unknown opcodes 482
+20050316 - unknown opcodes 537
+20050314 - unknown opcodes 623
+
+INTERESTING ROUTINES OF THE DAY:
+--------------------------------
+
+
+0x000c - does not exist in current sources but does belong to group deca/inca
+
+0x0272
+0x0271 - conditional instructions (probably following instruction gets executed/ignored
+0x0277 - if sr & 0x1
+
+0x3000 - 0x3100
+XORR
+|0011 00sr ---- ----|
+$(1e+r) ^= $(1a+s)
+
+0x3800 - 0x3900
+ORR
+|0011 10sr ---- ----|
+$(1e+r) |= $(1a+s)
+
+0x3400 - 0x3500
+ANDR
+|0011 01sr ---- ----|
+$(1e+r) &= $(1a+s)
+
+0x3c00
+ANDC
+|0011 110r ---- ----|
+$(1e+r) &= $(1f-r)
+
+0x3e00 - 0x3f00
+ORRC
+$(1e+r) |= $(1f-r)
+
+0x8000 - XXX
+
+0x8000 - 0x8900
+|1000 z00c 0rrr rxaa|
+if (c == 1) $R(z+0x1c) = $R(z+0x10) = $R(z+0x1e) = 0; set flags to 0x24
+$R(r+0x18) = @$Ra ; if (x == 0) $Ra++ else $Ra += $R(a+4);
+
+
+0x8600 0x8700
+|1000 011r ---- ----|
+Test $acxr.h
+
+0x8c00 - clr bit 15 of $SR
+0x8d00 - set bit 15 of $SR
+
+0x8a00 - clr bit 13 of $SR		// multiply result will be * 2
+0x8b00 - set bit 13 of $SR		// multiply result OK
+
+0x8e00 - clr bit 14 of $r13		// 40 bit mode
+0x8f00 - set bit 14 of $r13		// 32 bit mode
+
+// *** 9xxx START
+
+|1001 r001 0000 0000|
+asr16
+ASR acca, 16
+calculate flags
+
+|1001 a000 0000 0000|
+$prod = $(18+a) * $(1a+a)
+
+|1001 a01r 0000 0000|
+$aclr.hm = $prod.hm
+$aclr.l = 0
+$prod = $(18+a) * $(1a+a)
+
+|1001 a10r 0000 0000|
+$aclr += $prod
+$prod = $(18+a) * $(1a+a)
+
+|1001 a11r 0000 0000|
+$aclr = $prod
+$prod = $(18+a) * $(1a+a)
+
+// *** 9xxx END 
+
+// *** Axxx START
+|1010 r001 ---- ----|
+looks like test $acr   ??????????????????
+
+|1010 a000 0000 0000|
+$prod = $(18+a) * (a==0)?$19:$1b
+
+|1010 a01r 0000 0000|
+$acr.hm = $prod.hm
+$acr.l = 0
+$prod = $(18+a) * (a==0)?$19:$1b
+
+|1010 a10r 0000 0000|
+$acr += $prod
+$prod = $(18+a) * (a==0)?$19:$1b
+
+|1010 a11r 0000 0000|
+MULXMV
+$acr = $prod
+$prod = $(18+a) * (a==0)?$19:$1b
+
+// *** Axxx END
+
+0xb100 - test $ACL0 | $ACH0 | $r1c
+		 sets 24 if all of those above == 0
+0xb900 - test $ACL1 | $ACH1 | $r1d
+		 sets 24 if all of those above == 0
+
+b0
+$prod = $19 * $1a
+b8
+$prod = $1b * $1a
+
+
+c800
+$prod = $1b * $1e
+d800
+$prod = $1b * $1f
+d000
+$prod = $1a * 1f
+c000
+$prod = $1a * 1e
+
+c500/c400
+|110s a10r ---- ----|
+$acr += $prod ; $prod = $(1a+a) * $(1e+s)
+|110s a11r ---- ----|
+$acr = $prod ; $prod = $(1a+a) * $(1e+s)
+
+0xc100 - 0xd100
+|110r a001 ---- ----|
+compare $acca with $(1a+r)
+$acca < $(r1a)	28
+$acca > $(r1a)	21
+$acca = $(r1a)	25	// equal only if acc.1c == 0
+
+
+0xa000 - 0xb800
+|101m n000 0000 0000|
+m = 1 -> s = 1a ; m = 0 -> s = 18
+n = 1 -> d = 1b ; n = 0 -> d = 19
+$prod = $Rs * $Rd
+
+0xc000 - looks like r14 = $1a * $1e * 2;
+|1100
+0xd000 - looks like $1a * $1f * 2;
+|1101
+
+0xe000
+|1110 00ab ---- ----|
+$prod += (a==0)?$18:$1a * (b==0)?$19:$1b
+|1110 01ab ---- ----|
+$prod -= (a==0)?$18:$1a * (b==0)?$19:$1b
+|1110 10ab ---- ----|
+$prod += (a==0)?$1e:$1f * (b==0)?$1a:$1b
+|1110 11ab ---- ----|
+$prod -= (a==0)?$1e:$1f * (b==0)?$1a:$1b
+
+0xf000 - 0xf100
+LSL16
+|1111 000r ---- ----| 
+$r(10+r) = $r(1e+r); $r(1e+r) = $r(1c+r); $r(1c+r) = 0; simply... shift acc(r) by 16 left
+
+0xf400 - 0xf500
+LSR16
+|1111 010r ---- ----| 
+$r(1c+r) = $r(1e+r) ; $r(1e+r) = $r(10+r); $r(10+r) = 0; simply... shift acc(r) by 16 right
+
+0xf800
+ADDPAXZ
+|1111 10rd ---- ----|
+$acD.hm = $prod_x + $(1a+r) ; $accr.l = 0
+REMARK: $prod_x = $16 (sign extended) << 16 + U$15 + U$17
+REMARK!!! If has following load to the register, then acc is first cleared, then loaded
+with new value and then MAC is performed.
+FLAGS!
+
+0x--XX
+if preceding opcode is:
+CLEAR ACC			- accumulator value used for current opcode, accumulator cleaned, opcode executed
+MULTIPLY			- value of acc used, multiply performed, opcode executed
+MULTIPLY AND ACC:	- value of acc used, multiply performed, opcode executed, accumulate
+COMAPRE				- value loaded prior to compare (think so)
+TST					- value loaded prior to compare (think so)
+
+

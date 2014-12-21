@@ -1,0 +1,463 @@
+
+I. REGISTERS
+   ---------
+
+There is total of 32 registers in DSP
+
+Registers are numbered from $00 to $1f
+
+Name     | Num | Alt name   Comment
+-----------------------------------
+$ar0       $0
+$ar1       $1
+$ar2       $2
+$ar3       $3
+
+$st0       $12   $r0c      
+$st1       $13   $r0d
+$st2       $14   $r0e
+$st3       $15   $r0f
+
+$ac0.h     $16   $r10        Sign extended 8 bit register
+$ac1.h     $17   $r11        Sign extended 8 bit register
+
+$sr        $19
+
+$prod.l    $20
+$prod.m	   $21
+$prod.h    $22
+$prod.m2   $23   $r17        Added to $prod.m
+
+$ax0.l     $24
+$ax1.l     $25
+$ax0.h     $26
+$ax1.h     $27
+
+$ac0.l     $28
+$ac1.l     $29
+$ac0.m     $30
+$ac1.m     $31
+
+
+
+1. Accumulators ACC0, ACC1
+
+There are 2 accumulator registers
+
+In 40 bit mode accumulators consist of:
+ACC0 = R10 (8 bit sign extended to 16 bit) << 32 | R1e (16 bit) << 16 | R1c (16bit)
+ACC1 = R11 (8 bit sign extended to 16 bit) << 32 | R1f (16 bit) << 16 | R1d (16bit)
+
+Both registers are 24 bit although they can work in 16 bit mode (sign extended to ACH)
+
+ACC0 ( R1e (8bit) + R10 (16bit) )
+ACC1 ( R1f (8bit) + R11 (16bit) )
+
+Loading to accumulator in 16bit mode sets R1c (for ACL0) and R1d (for ACL1) to zero (0).
+In 24 bit mode all registers can be set independently.
+
+Loading register in 16BIT 1e/1f mode causes sign extension to 10/11 and zer to 1c/1d
+
+2. Stack registers ST0, ST1, ST2, ST3
+
+Moving to those registers moves into LIFO stack. Unknown depth for now.
+Moving to those registers in 16 bit mode, causes 24 bit data to be saturated first.
+$st2 and $st3 are combined 32bit LIFO. storing into this register must happen in following
+order. First write to ST2 then write to ST3. Any modification of registers between 
+writes cause ST2 to be written with 0. Read order should be same, first read ST2 then ST3.
+Reading $st3 advances queue to next item.
+
+$st0 is a call stack - TO BE REVERSED
+
+
+3. SCR Status Control Register
+
+Bit | Name  |Description
+14  | AM    | Accumulator size: 0 - xx bit mode (range 0x8000 - 0x7fff) ; 1 - 40 bit mode
+ 8  | RES=0 | Seem to be hardwired to 0
+ 4  | AS    | Accumulator sign bit. Xor of bits from r10/r11 and r1e/r1f
+ 3  | S     | Sign flag
+ 2  | Z     | Zero flag
+ 
+
+
+
+4. Hardware Registers
+
+Mailboxes
+
+DMB (DSP->CPU Mailbox) and CMB (CPU->DSP Mailbox) are two 32 bit mailboxes with valuable data
+stored in 31 bits. Bit 31 of each mailbox flags that mailbox has a mail.
+Seems that reading from lower part of mailbox when there is no mail causes CPU to stall 
+(wait for MBOX data) or hang - this needs to be checked.
+
+
+--------------------------------------------------------
+
+EXTENDED OPCODES:
+-----------------
+
+'[DAR][IAR][NAR]
+|xxxx xxxx 0000 nnaa|
+n = 00 no-op
+n = 01 [DAR] $a--
+n = 10 [IAR] $a++
+n = 11 [NAR] $a + $(a+4)
+
+'MV
+|xxxx xxxx 0001 ddss|
+$(d+18) = $(s+1c)
+
+'S[N]
+|xxxx xxxx 001r rnaa|
+@$a = $(r+1c)
+n = 0 $a++
+n = 1 $a += $(a+4)
+
+'L[N]
+|xxxx xxxx 01dd diss|
+$(d+0x18) = @$s
+i = 0 -> $Rs++
+i = 1 -> $Rs += $R(s+4)
+
+'LS[NM|M|N]
+|xxxx xxxx 10dd ba0r|
+$(18+d) = @$00 ; @$03 = $(1e+r)
+
+'SL[NM|M|N]
+|xxxx xxxx 10dd ba1r|
+@$00 = $(1e+r) ; $(18+d) = @$03
+a = 0 -> $R00++
+b = 0 -> $R03++
+a = 1 -> $R00 += $R04	[N]
+b = 1 -> $R03 += $R07	[M] // something fucked with adding here, always happen for $R03
+
+'LD[NM|M|N]
+|xxxx xxxx 11mn barr| !!! if rr == 11 then there is special version look below
+m = 1 -> s = 1a ; m = 0 -> s = 18
+n = 1 -> d = 1b ; n = 0 -> d = 19
+$s = $d = @$r
+a = 0 -> $r++
+b = 0 -> $03++
+a = 1 -> $r += $(r+4) [N]
+b = 1 -> $03 += $07   [M] // something fucked with adding here, always happen for $R03
+
+'LDX[NM|M|N]
+special version for rr = 11 (0x3)
+|xxxx xxxx 11rm ba11|
+m = 0 -> s = 18, d = 1a ($ax0)
+m = 1 -> s = 19, d = 1b ($ax1)
+$s = $d = @$r
+a = 0 -> $r++
+b = 0 -> $03++
+a = 1 -> $r += $(r+4)
+b = 1 -> $03 += $07 // something fucked with adding here, always happen for $R03
+
+
+
+
+OPCODES:
+--------
+
+
+Legend:
+ O - opcode
+ P - operands
+ B - binary encoding
+ S - syntax
+ D - description
+ F - status register affected flags
+
+O: NOP
+B: |0000 0000 0000 0000|
+N: No OPeration
+D: No operation performed.
+F: |---- ---- ---- ----|
+
+O: HALT
+B: |0000 0000 0010 0001|
+D: Halt CPU. Set HALT bit in DSP Control Register.
+F: |---- ---- ---- ----|
+
+O: RET
+B: |0000 0010 1101 1111|
+D: Return from subroutine. Pops address from call stack ST0 and sets PC to this value.
+F: |---- ---- ---- ----|
+
+O: LRI
+B: |0000 0000 100r rrrr| 
+D: Load register $r with 16 bit immediate value. For certain registers additional operations are
+   performed.
+S: LRI      $r, #imm
+F: |---- ---- ---- ----|
+
+O: LR
+B: |0000 0000 110r rrrr| |xxxx xxxx xxxx xxxx|
+D: Load register $r with value from memory location x
+S: LR       $r, @xxxx
+F: |---- ---- ---- ----|
+
+O: SR
+B: |0000 0000 111r rrrr| |xxxx xxxx xxxx xxxx|
+D: Store register $r at memory location x
+S: LR       $r, @xxxx
+F: |---- ---- ---- ----|
+
+O: LRR[I|D|N]
+R: LRR LRRI LRRD LRRN
+B: |0001 100x xaar rrrr|
+D: Load $r register from memory location pointed by addressing register $a (a = 0-3)
+S: LRR[I|D|N] $r, @$a
+X: xx: 11 - $a = $a + $(a+4); 10 - $a++; 01 - $a--;
+
+O: SRR[I|D|N]
+B: |0001 101x xaar rrrr|
+D: Store $r register to memory location pointed by $a (a = 0-3)
+S: SRR[I|D|N] $r, @$a
+X: xx: 11 - $a = $a + $(a+4); 10 - $a++; 01 - $a--;
+
+O: MRR
+B: |0001 11dd ddds ssss|
+D: Move register $s to register $d
+X: moving RH0 -> R6 - 8 bit sign extended
+F: |---- ---- ---- ----|
+
+O: JMPR
+B: |0001 1110 aaa0 1111|
+D: Jump to address register $a
+F: |---- ---- ---- ----|
+
+O: CALLR
+B: |0001 1110 aaa1 1111|
+D: Call to address register $a. Store return address on call stack $st0.
+F: |---- ---- ---- ----|
+
+O: DAR
+B: |0000 0000 0000 01aa|
+D: Decrement register $ar (a = 0-3)
+S: DAR    $a
+
+O: IAR
+B: |0000 0000 0000 10aa|
+D: Decrement register $ar (a = 0-3)
+S: IAR    $a
+
+O: DECM
+B: |0111 100r 0000 0000|
+D: Decrement accumulator $acR.hm
+
+O: INCM
+B: |0111 010r 0000 0000|
+D: Increment accumulator $acR.hm
+
+O: DEC
+B: |0111 101r 0000 0000|
+D: Decrement accumulator $acR
+
+O: INC
+B: |0111 011r 0000 0000|
+D: Increment accumulator $acR
+
+O: ILRR[I|D|N]
+B: |0000 001r 0001 mmaa|
+D: Load code from instruction memory pointed by addressing register $a to $(1e+r)
+X: m = 01 $a--; m = 10 $a++, m = 11 $a += $(a+4)
+F: |---- ---- ---- ----|
+
+O: LOOPI
+B: |0001 0000 iiii iiii|
+D: Loop next instruction for #imm number of times (imm is unsigned)
+S: LOOPI  #imm
+
+O: LOOP
+B: |0000 0000 010r rrrr|
+D: Loop the next instruction for the number of times given in $r
+S: LOOP   $r
+
+O: BLOOP
+N: Block Loop
+B: |0000 0000 011r rrrr| |aaaa aaaa aaaa aaaa|
+D: Loop block amount of times given in register $r. Block starts at instruction following
+   this instruction and ands at instruction pointed by address (including that location).
+X: At the beginning of block execution, block start is being put on instruction stack $st0
+   and end of block address in $st2. Number of counts remaining is located at $st3.
+S: BLOOP	$Rr, addr
+F: |---- ---- ---- ----|
+
+O: BLOOPI
+N: Block Loop Immediate
+B: |0001 0001 iiii iiii| |aaaa aaaa aaaa aaaa|
+D: Loop block amount of times given as #imm. Block starts at instruction following
+   this instruction and ands at instruction pointed by address (including that location).
+X: At the beginning of block execution, block start is being put on instruction stack $st0
+   and end of block address in $st2. Number of counts remaining is located at $st3.
+S: BLOOPI	#imm, addr
+F: |---- ---- ---- ----|
+
+O: <A|L>S<L|R>
+R: LSL LSR ASL ASR
+N: <Arithmetic|Logic> Shift <Left|Right> 
+B: |0001 010r asss ssss|
+D: Shift 40 bit accumulator. LSR shifts in 0 at bit 39, ASR shifts in sign bit. 
+   After shifting bits 47-40 are eual bit 39
+X: r - ACCr ; a = 1 - arithmetic ; s < 0 shift right -s
+F: |---- ---- -?XX XXXX|
+
+O: SBSET
+N: Status register Bit SET
+B: |0001 0011 0000 0bbb|
+D: Set/clear bit of Status Register
+X: b - bit number (b + 6)
+S: SBSET    #imm
+F: |---X XXX- XX-- ----|
+
+O: SBCLR
+N: Status register Bit CLeaR
+B: |0001 0010 0000 0bbb|
+D: Clear bit of Status Register
+X: b - bit number (b + 6)
+S: SBCLR    #imm
+F: |---X XXX- XX-- ----|
+
+
+O: ANDF
+B: |0000 0010 1100 0000| |iiii iiii iiii iiii|
+D: And small accumulator (16bit) $(r+1e) following integer and then compare with
+   this integer. Set bit L of SR if result equal.
+F: |-----------X-- ----|
+
+
+O: ANDF2
+B: |0000 0010 1010 0000| |iiii iiii iiii iiii|
+D: And small accumulator (16bit) $(r+1e) with following integer. If result is equal zero
+   set bit L of SR.
+F: |-----------X-- ----|
+
+O: ANDC
+B: |0000 001r 0100 0000| |iiii iiii iiii iiii|
+D: And small accumulator (16bit) $(r+1e) with following integer. Set bits according to
+   test of small accumlator
+F: |------------XX XXXX|
+
+O: ADDAI
+B: |0000 001r 0000 0000| |iiii iiii iiii iiii|
+D: Add immediate i to $acc.hm
+F: |---- ---- --XX XXXX|
+
+O: CLRA
+B: |1000 r001 ---- ----|
+D: Clear accumulator (40 bit). $acc.hml = 0.
+F: |------------10 0100|
+
+O: TSTA
+B: |1011 r001 ---- ----|
+D: Test accumulator $r and set appropriate flags.
+F: |-------------X XXXX|
+
+O: MOVAX
+B: |0110 10sd ---- ----|
+D: Move $acxs.hl to $accd.ml. $acD.h is sign extension of $acD.ml.
+F: |-------------X XXXX|
+
+O: MOVR
+B: |0110 0ssd ---- ----|
+D: Move $(0x18+S) to $acD.m. $acD.h and $acD.l set to 0.
+F: |-------------X XXXX|
+
+O: MOV
+B: |0110 110d ---- ----|
+D: Move $ac(1-D) to $acD
+F: |-------------X XXXX|
+
+O: SUBISF
+B: |0000 011d iiii iiii|
+D: Compares (by substraction withour writing result back) $accd.hm with #imm.
+   Whole accumulator $accd.hml is tested for result
+F: |-------------X XXXX|
+
+O: XORR
+B: |0011 00sr ---- ----|
+D: Xors register $(1e+r) with register $(1a+s). Result goes into $(1e+r)
+
+O: MULX
+B: |101a b000 ---- ----|
+D: Multiply reg $18/$1a by $19/$1b.
+
+O: CMP
+B: |1000 0010 ---- ----|
+D: Compare $ac0 with $ac1
+F: |---- ---- ---X XXXX|
+
+O: CLRP
+B: |1000 0100 0000 0000|
+D: Clear $prod. $14 = 0; $15 = 0xfff0 ; $16 = 0x00ff ; $17 = 0x0010
+F: |---- ---- ---- ----|
+
+O: ADDR
+B: |0100 0ssd 0000 0000|
+D: Adds register to middle accumulator. $accd.hm += $(18+s);
+F: |---- ---- ---X XXXX|
+
+O: ADDAX
+B: |0100 10sd 0000 0000|
+D: Adds AX to low accumulator. $acd.hml += $axs.hl ($(1c+d) += $(18+s) ; $(1e+d) += $(1a+s))
+F: |---- ---- ---X XXXX|
+
+O: ADD
+B: |0100 110r 0000 0000|
+D: Adds $ac0 to $ac1 and stores result in $acd. $acd = $ac0 + $ac1
+F: |---- ---- ---X XXXX|
+
+O: SUBR
+B: |0101 0ssd 0000 0000|
+D: Subtracts register from middle accumulator. $accd.hm += $(18+s);
+F: |---- ---- ---X XXXX|
+
+O: SUBAX
+B: |0101 10sd 0000 0000|
+D: Subtracts AX from low accumulator. $acd.hml += $axs.hl ($(1c+d) += $(18+s) ; $(1e+d) += $(1a+s))
+F: |---- ---- ---X XXXX|
+
+O: SUB
+B: |0101 110r 0000 0000|
+D: Subtracts other accumulator from destination accumulator. $acD -= $ac(1-D)
+F: |---- ---- ---X XXXX|
+
+O: ADDAXL
+B: |0111 00sd ---- ----|
+D: Adds $axS.l to $acD.hml
+F: |-------------X XXXX|
+
+O: NEG
+B: |0111 110d ---- ----|
+D: Negates accumulator. $acd =- $acd
+
+O: MADDX
+B: |1111 001s ---- ----|
+D: Multiply $(18+s) by $(1a+s) and add result to $prod
+F: |-------------X XXXX|
+
+O: MSUBX
+B: |1111 011s ---- ----|
+D: Multiply $(18+s) by $(1a+s) and subtract result from $prod
+F: |-------------X XXXX|
+
+O: ADDP
+B: |0100 111r ---- ----|
+D: Add product register to accumulator $acR
+F: |-------------X XXXX|
+
+O: MOVPZ
+B: |1111 111r ---- ----|
+D: Moves $prod to $acR and sets $acR.l to 0
+F: |-------------X XXXX|
+
+O: MOVNP
+B: |0111 111r ---- ----|
+D: Moves negative product $prod to $acR
+F: |-------------X XXXX|
+
+O: CLRL
+B: |1111 110r ---- ----|
+D: Clears low part of accumulator. $acR.l = 0
+F: |-------------X XXXX|
