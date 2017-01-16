@@ -8,7 +8,7 @@
 
 static void usage()
 {
-	fprintf(stderr, "gxtexconv v"PACKAGE_VERSION"\n");
+	fprintf(stderr, "gxtexconv v" PACKAGE_VERSION "\n");
 	fprintf(stderr, "coded by shagkur, #wiidev blitzed\n");
 	fprintf(stderr, "powered by FreeImage library\n\n");
 	fprintf(stderr, "usage: gxtexconv -i <imagepath> [-o <outputfile>.tpl colfmt=<texfmt> mipmap=yes minlod=<min level> maxlod=<max level> width=<newwidth> height=<newheight> [palfmt=<palcolfmt>]]\n");
