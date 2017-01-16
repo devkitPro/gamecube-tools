@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([gamecube-tools],[1.0.0],[davem@devkitpro.org])
+AC_INIT([gamecube-tools],[1.0.1],[https://github.com/devkitPro/gamecube-tools/issues])
 AC_CONFIG_SRCDIR([gdtool/gdtool.cpp])
 
 AM_INIT_AUTOMAKE([1.10])
@@ -31,7 +31,7 @@ AC_CHECK_HEADER([FreeImage.h])
 
 AC_MSG_CHECKING([for libfreeimage])
 save_LIBS="$LIBS"
-LIBS="$LIBS -lfreeimage ${WIN_FREEIMAGE_LIBS} -lstdc++"
+LIBS="$LIBS -lfreeimage ${WIN_FREEIMAGE_LIBS} -lstdc++ -lm"
 AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM([[#include <FreeImage.h>]],
 	[[FreeImage_DeInitialise()]])],
@@ -40,7 +40,7 @@ AC_LINK_IFELSE(
 AC_MSG_RESULT([$freeimage_result])
 LIBS="$save_LIBS"
 if test "x$freeimage_result" = "xyes"; then
-	FREEIMAGE_LIBS="-lfreeimage ${WIN_FREEIMAGE_LIBS} -lstdc++"
+	FREEIMAGE_LIBS="-lfreeimage ${WIN_FREEIMAGE_LIBS} -lstdc++ -lm"
 else
 	 AC_MSG_ERROR(['libfreeimage' not found])
 fi
