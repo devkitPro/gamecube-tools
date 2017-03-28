@@ -146,6 +146,21 @@ void ferrordie(FILE *f, const char *str)
 	}
 }
 
+void add_bss(DOL_map *map, uint32_t paddr, uint32_t memsz)
+{
+	if(map->flags & HAVE_BSS) {
+		uint32_t start = swap32(map->header.bss_addr);
+		uint32_t size = swap32(map->header.bss_size);
+		if ( (start+size) == paddr) {
+			map->header.bss_size = swap32(size+memsz);
+		}
+	} else {
+		map->header.bss_addr = swap32(paddr);
+		map->header.bss_size = swap32(memsz);
+		map->flags |= HAVE_BSS;
+	}
+}
+
 void read_elf_segments(DOL_map *map, const char *elf)
 {
 	int read, i;
@@ -219,10 +234,12 @@ void read_elf_segments(DOL_map *map, const char *elf)
 						fprintf(stderr, "Warning: non-readable segment %d\n", i);
 					if(flags & PF_W)
 						fprintf(stderr, "Warning: writable and executable segment %d\n", i);
-					if(filesz != memsz) {
-							fprintf(stderr, "Error: TEXT segment %d memory size (0x%x) does not equal file size (0x%x)\n",
+					if(filesz > memsz) {
+							fprintf(stderr, "Error: TEXT segment %d memory size (0x%x) smaller than file size (0x%x)\n",
 							                i, memsz, filesz);
 							exit(1);
+					} else if (memsz > filesz) {
+						add_bss(map, paddr + filesz, memsz - filesz);
 					}
 					if(map->text_cnt >= MAX_TEXT_SEGMENTS) {
 						die("Error: Too many TEXT segments");
@@ -237,17 +254,7 @@ void read_elf_segments(DOL_map *map, const char *elf)
 						fprintf(stderr, "Warning: non-readable segment %d\n", i);
 					if(filesz == 0) {
 						// BSS segment
-						if(map->flags & HAVE_BSS) {
-							uint32_t start = swap32(map->header.bss_addr);
-							uint32_t size = swap32(map->header.bss_size);
-							if ( (start+size) == paddr) {
-								map->header.bss_size = swap32(size+memsz);
-							}
-						} else {
-							map->header.bss_addr = swap32(paddr);
-							map->header.bss_size = swap32(memsz);
-							map->flags |= HAVE_BSS;
-						}
+						add_bss(map, paddr, memsz);
 					} else {
 						// DATA segment
 						if(filesz > memsz) {
