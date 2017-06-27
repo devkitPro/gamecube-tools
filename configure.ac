@@ -5,7 +5,7 @@ AC_PREREQ(2.61)
 AC_INIT([gamecube-tools],[1.0.1],[https://github.com/devkitPro/gamecube-tools/issues])
 AC_CONFIG_SRCDIR([gdtool/gdtool.cpp])
 
-AM_INIT_AUTOMAKE([1.10])
+AM_INIT_AUTOMAKE([subdir-objects])
 
 AC_CONFIG_MACRO_DIR([m4])
 
