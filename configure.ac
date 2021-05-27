@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([gamecube-tools],[1.0.2],[https://github.com/devkitPro/gamecube-tools/issues])
+AC_INIT([gamecube-tools],[1.0.3],[https://github.com/devkitPro/gamecube-tools/issues])
 AC_CONFIG_SRCDIR([gdtool/gdtool.cpp])
 
 AM_INIT_AUTOMAKE([subdir-objects])
