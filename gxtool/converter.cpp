@@ -550,7 +550,7 @@ void CConverter::ReallocImgArray()
 	if(ppImages){
 		memset(ppImages,0,(m_nMaxSrcImgAlloc+20)*sizeof(_tsImage*));
 		if(m_ppSrcImages) {
-			memcpy(ppImages,m_ppSrcImages,m_nMaxSrcImgAlloc);
+			memcpy(ppImages,m_ppSrcImages,m_nMaxSrcImgAlloc*sizeof(_tsImage*));
 			delete [] m_ppSrcImages;
 		}
 	}
