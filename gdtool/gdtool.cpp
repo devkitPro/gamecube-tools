@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
 		fclose(fout);
 		break;
 	default:
-		printf("GCDSP "PACKAGE_VERSION", Copyright (C) 2005 Duddie\nGCDSP comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome\nto redistribute it under GPL conditions\n");
+		printf("GCDSP " PACKAGE_VERSION ", Copyright (C) 2005 Duddie\nGCDSP comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome\nto redistribute it under GPL conditions\n");
 		printf("\nUsage:\n\n");
 		printf("	gcdsptool <param1> <param2> ....\n\n");
 		printf("		-a 0x01AB  -> start address to disassemble\n");
