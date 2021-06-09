@@ -37,11 +37,20 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
+	FreeImage_Initialise();
+
 	cParser.Parse(argc,argv);
 	cConv = CConverter(&cParser);
-	if (cConv.GenerateTextures() != EXIT_SUCCESS) return EXIT_FAILURE;
-	if (cConv.WriteTextures() != EXIT_SUCCESS) return EXIT_FAILURE;
 
-	return 0;
+	int exitcode = EXIT_FAILURE;
+
+	if (cConv.GenerateTextures() == EXIT_SUCCESS)
+	{
+		if (cConv.WriteTextures() == EXIT_SUCCESS) exitcode=EXIT_SUCCESS;
+	}
+
+	FreeImage_DeInitialise();
+
+	return exitcode;
 }
 
