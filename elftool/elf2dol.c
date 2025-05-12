@@ -435,7 +435,7 @@ int main(int argc, char **argv)
 	while(argc && *arg[0] == '-') {
 		if(!strcmp(*arg, "-h")) {
 			usage(argv[0]);
-			return 1;
+			return 0;
 		} else if(!strcmp(*arg, "-v")) {
 			verbosity++;
 		} else if(!strcmp(*arg, "--")) {
